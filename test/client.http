@@ -1,0 +1,16 @@
+@baseUrl = http://localhost:3000
+@jwtToken = <JWT_TOKEN>
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Protected Endpoint (replace <JWT_TOKEN> with a valid token)
+GET {{baseUrl}}/api/performance
+Authorization: Bearer {{jwtToken}}
+
+### Invalid Token
+GET {{baseUrl}}/api/protected
+Authorization: Bearer invalidtoken
+
+### Missing Token
+GET {{baseUrl}}/api/protected 

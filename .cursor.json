@@ -1,0 +1,89 @@
+{
+  "projectName": "ClaveHR Backend",
+  "defaultPath": ".",
+  "fileExplorer": {
+    "exclude": [
+      "node_modules",
+      ".git",
+      "dist",
+      "build",
+      "coverage",
+      ".vscode"
+    ]
+  },
+  "editor": {
+    "tabSize": 2,
+    "formatOnSave": true,
+    "formatOnPaste": true,
+    "trimTrailingWhitespace": true,
+    "insertFinalNewline": true
+  },
+  "terminal": {
+    "shell": "/bin/zsh",
+    "cwd": "."
+  },
+  "linting": {
+    "enabled": true,
+    "eslint": {
+      "enabled": true,
+      "configPath": ".eslintrc.js"
+    },
+    "typescript": {
+      "enabled": true,
+      "configPath": "tsconfig.json"
+    },
+    "prettier": {
+      "enabled": true,
+      "configPath": ".prettierrc"
+    }
+  },
+  "search": {
+    "exclude": [
+      "node_modules",
+      ".git",
+      "dist",
+      "build",
+      "coverage"
+    ]
+  },
+  "snippets": {
+    "typescript": {
+      "zod-schema": {
+        "prefix": "zschema",
+        "body": [
+          "import { z } from 'zod';",
+          "",
+          "export const ${1:SchemaName} = z.object({",
+          "  ${2:field}: ${3:z.string()},",
+          "});",
+          "",
+          "export type ${4:TypeName} = z.infer<typeof ${1:SchemaName}>;",
+          ""
+        ],
+        "description": "Create a Zod schema with TypeScript type inference"
+      }
+    },
+    "javascript": {
+      "api-route": {
+        "prefix": "express-route",
+        "body": [
+          "const express = require('express');",
+          "const router = express.Router();",
+          "",
+          "router.get('/${1:path}', async (req, res, next) => {",
+          "  try {",
+          "    $2",
+          "    res.json({ data: ${3:result} });",
+          "  } catch (error) {",
+          "    next(error);",
+          "  }",
+          "});",
+          "",
+          "module.exports = router;",
+          ""
+        ],
+        "description": "Create an Express router with a GET endpoint"
+      }
+    }
+  }
+}
