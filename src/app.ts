@@ -10,6 +10,8 @@ import { services, isServiceConfigured, getServiceConfig } from './config/servic
 import { logger } from './utils/logger';
 import { AuthenticatedRequest } from './types/request';
 import { Config } from './config/config';
+import axios from 'axios';
+import identityRoutes from './routes/identity.routes';
 
 const app = express();
 
@@ -17,8 +19,12 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(requestIdMiddleware);
 app.use(responseInterceptor);
+
+// Use custom routes for identity service
+app.use('/api/auth', identityRoutes);
 
 // Proxy middleware to forward user claims and request ID
 const proxyMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {

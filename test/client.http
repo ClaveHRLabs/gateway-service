@@ -1,10 +1,10 @@
 @baseUrl = http://localhost:3000
-@jwtToken = <JWT_TOKEN>
+@jwtToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmMjU2NjVlOS0zNThkLTQxY2UtYTc0Zi04Nzc1YmE0ODFjNDkiLCJpZCI6ImYyNTY2NWU5LTM1OGQtNDFjZS1hNzRmLTg3NzViYTQ4MWM0OSIsImVtYWlsIjoibWFuaWJhYnVAZ29lc3Nvci5jb20iLCJmaXJzdE5hbWUiOiJNYW5pYmFidSIsImxhc3ROYW1lIjoiUGlwcGFsbGEiLCJyb2xlIjoiZW1wbG95ZWUiLCJyb2xlcyI6W10sInN0YXR1cyI6ImFjdGl2ZSIsIm9yZ2FuaXphdGlvbklkIjpudWxsLCJ0eXBlIjoiYWNjZXNzIiwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NDc1MDYyOTksImV4cCI6MTc0NzUwOTg5OX0.j6qVu0iPCdbdoxy9lR2gF71mE8W5LMFd_M16xehdE4o
 
 ### Health Check
 GET {{baseUrl}}/health
 
-### Protected Endpoint (replace <JWT_TOKEN> with a valid token)
+
 GET {{baseUrl}}/api/performance
 Authorization: Bearer {{jwtToken}}
 

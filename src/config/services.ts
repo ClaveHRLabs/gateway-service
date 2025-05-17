@@ -37,6 +37,16 @@ export const services: ServiceConfig[] = [
             max: 100,
         },
     },
+    {
+        name: 'identity-service',
+        url: Config.get('IDENTITY_SERVICE_URL', 'http://localhost:3001'),
+        path: '/api/auth',
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        rateLimit: {
+            windowMs: 15 * 60 * 1000,
+            max: 100,
+        },
+    },
     // Add other services as needed
 ].map(service => {
     try {

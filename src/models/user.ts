@@ -25,18 +25,15 @@ const messages = {
 export const baseUserSchema = z.object({
     id: z.string().regex(patterns.uuid),
     email: z.string().regex(patterns.email, messages.invalidEmail),
-    firstName: z.string().min(1, messages.required).max(100, messages.tooLong),
-    lastName: z.string().min(1, messages.required).max(100, messages.tooLong),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
     phone: z.string().regex(patterns.phone, messages.invalidPhone).optional(),
     avatar: z.string().regex(patterns.url, messages.invalidUrl).optional(),
-    createdAt: z.string().regex(patterns.date, messages.invalidDate),
-    updatedAt: z.string().regex(patterns.date, messages.invalidDate),
-    metadata: z.record(z.unknown())
-        .refine(
-            (data) => Object.keys(data).length <= 50,
-            'Maximum 50 metadata entries allowed'
-        )
-        .optional(),
+    metadata: z.record(z.unknown()).optional(),
+    additionalData: z.record(z.unknown()).optional(),
+    iat: z.number().optional(),
+    exp: z.number().optional(),
+    sub: z.string().optional(),
 });
 
 // User roles
@@ -49,8 +46,13 @@ export type UserStatus = z.infer<typeof UserStatus>;
 
 // Complete user schema
 export const userSchema = baseUserSchema.extend({
-    role: UserRole,
-    status: UserStatus,
+    role: z.string(),
+    roles: z.array(z.string()).optional(),
+    status: z.string(),
+    organizationId: z.string().regex(patterns.uuid).optional(),
+    type: z.enum(['access', 'refresh']),
+    createdAt: z.string().regex(patterns.date, messages.invalidDate).optional(),
+    updatedAt: z.string().regex(patterns.date, messages.invalidDate).optional(),
     lastLoginAt: z.string().regex(patterns.date, messages.invalidDate).optional(),
     departmentId: z.string().regex(patterns.uuid).optional(),
     managerId: z.string().regex(patterns.uuid).optional(),
@@ -97,7 +99,7 @@ export const validateUser = (data: unknown, schema: z.ZodType) => {
             const formattedErrors = error.errors.map(err => ({
                 path: err.path.join('.'),
                 message: err.message,
-                received: err.received,
+                code: err.code,
             }));
             throw new Error(`User validation failed: ${JSON.stringify(formattedErrors)}`);
         }

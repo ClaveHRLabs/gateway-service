@@ -36,6 +36,7 @@ JWT_SECRET=your_jwt_secret
 JWT_EXPIRATION=1h
 
 # Service URLs
+IDENTITY_SERVICE_URL=http://localhost:3001
 AUTH_SERVICE_URL=http://localhost:3001
 USER_SERVICE_URL=http://localhost:3002
 COMPLIANCE_SERVICE_URL=http://localhost:3003

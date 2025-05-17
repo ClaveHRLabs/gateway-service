@@ -67,7 +67,7 @@ export const validateResponse = (data: unknown, schema: z.ZodType) => {
             const formattedErrors = error.errors.map(err => ({
                 path: err.path.join('.'),
                 message: err.message,
-                received: err.received,
+                code: err.code
             }));
             throw new Error(`Response validation failed: ${JSON.stringify(formattedErrors)}`);
         }
