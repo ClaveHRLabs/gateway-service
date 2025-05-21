@@ -15,7 +15,7 @@ export const requestHeadersSchema = z.object({
     'x-user-id': z.string().uuid(),
     'x-user-email': z.string().email(),
     'x-user-roles': z.string(),
-    'x-organization-id': z.string().uuid(),
+    'x-organization-id': z.string().uuid().optional(),
     'x-tenant-id': z.string().uuid().optional(),
     'x-user-first-name': z.string().optional(),
     'x-user-last-name': z.string().optional(),
@@ -32,6 +32,7 @@ export const requestHeadersSchema = z.object({
 // Request validation function
 export const validateRequestHeaders = (headers: Record<string, string>) => {
     try {
+        console.log('headers', headers);
         return requestHeadersSchema.parse(headers);
     } catch (error) {
         if (error instanceof z.ZodError) {

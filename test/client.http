@@ -1,16 +1,14 @@
-@baseUrl = http://localhost:3000
-@jwtToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmMjU2NjVlOS0zNThkLTQxY2UtYTc0Zi04Nzc1YmE0ODFjNDkiLCJpZCI6ImYyNTY2NWU5LTM1OGQtNDFjZS1hNzRmLTg3NzViYTQ4MWM0OSIsImVtYWlsIjoibWFuaWJhYnVAZ29lc3Nvci5jb20iLCJmaXJzdE5hbWUiOiJNYW5pYmFidSIsImxhc3ROYW1lIjoiUGlwcGFsbGEiLCJyb2xlIjoiZW1wbG95ZWUiLCJyb2xlcyI6W10sInN0YXR1cyI6ImFjdGl2ZSIsIm9yZ2FuaXphdGlvbklkIjpudWxsLCJ0eXBlIjoiYWNjZXNzIiwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NDc1MDYyOTksImV4cCI6MTc0NzUwOTg5OX0.j6qVu0iPCdbdoxy9lR2gF71mE8W5LMFd_M16xehdE4o
+@baseUrl = http://localhost:5001
+@jwtToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhNDcxYjY0Ni04ODQwLTRhZjAtYTA5OC02NDhiZWFhOGNlYjMiLCJpZCI6ImE0NzFiNjQ2LTg4NDAtNGFmMC1hMDk4LTY0OGJlYWE4Y2ViMyIsImVtYWlsIjoibWFuaWJhYnVAZ29lc3Nvci5jb20iLCJmaXJzdE5hbWUiOiJNYW5pYmFidSIsImxhc3ROYW1lIjoiUGlwcGFsbGEiLCJyb2xlIjoiZW1wbG95ZWUiLCJyb2xlcyI6W10sInN0YXR1cyI6ImFjdGl2ZSIsIm9yZ2FuaXphdGlvbklkIjpudWxsLCJ0eXBlIjoiYWNjZXNzIiwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NDc4MjY0NTgsImV4cCI6MTc0NzgzMDA1OH0.Pua-bG2Qgv-gU0hdf5fGZf4_JLj3a8EMw_htWJ3B0EY
 
 ### Health Check
 GET {{baseUrl}}/health
-
-
-GET {{baseUrl}}/api/performance
 Authorization: Bearer {{jwtToken}}
 
-### Invalid Token
-GET {{baseUrl}}/api/protected
-Authorization: Bearer invalidtoken
+### Identity Service - Get Current User
+GET {{baseUrl}}/id/api/users/me
+Authorization: Bearer {{jwtToken}}
 
-### Missing Token
-GET {{baseUrl}}/api/protected 
+### Identity Service - Public Endpoint
+GET {{baseUrl}}/id/health
+Authorization: Bearer {{jwtToken}}

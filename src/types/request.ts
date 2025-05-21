@@ -1,5 +1,19 @@
 import { Request } from 'express';
-import { UserClaims } from '../models/user';
+import { z } from 'zod';
+import { baseUserSchema } from '../models/user';
+
+export type UserClaims = z.infer<typeof baseUserSchema> & {
+    roles: string[];
+    organizationId?: string;
+    department?: string;
+    position?: string;
+    permissions?: string[];
+    tenantId?: string;
+    locale?: string;
+    timezone?: string;
+    lastLogin?: string;
+    isActive?: boolean;
+};
 
 export interface AuthenticatedRequest extends Request {
     requestId: string;
@@ -9,7 +23,6 @@ export interface AuthenticatedRequest extends Request {
 export interface ServiceConfig {
     name: string;
     url: string;
-    path: string;
     methods: string[];
     rateLimit?: {
         windowMs: number;

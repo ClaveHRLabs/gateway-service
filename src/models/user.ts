@@ -49,7 +49,7 @@ export const userSchema = baseUserSchema.extend({
     role: z.string(),
     roles: z.array(z.string()).optional(),
     status: z.string(),
-    organizationId: z.string().regex(patterns.uuid).optional(),
+    organizationId: z.string().regex(patterns.uuid).optional().nullable(),
     type: z.enum(['access', 'refresh']),
     createdAt: z.string().regex(patterns.date, messages.invalidDate).optional(),
     updatedAt: z.string().regex(patterns.date, messages.invalidDate).optional(),

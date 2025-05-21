@@ -12,7 +12,7 @@ export class Config {
     public static readonly JWT_SECRET: string = Config.getRequired('JWT_SECRET');
     public static readonly LOG_LEVEL: string = Config.get('LOG_LEVEL', 'info');
     public static readonly SERVICE_NAME: string = Config.get('SERVICE_NAME', 'gateway-service');
-    public static readonly API_PREFIX: string = Config.get('API_PREFIX', '/api');
+    public static readonly API_PREFIX: string = Config.get('API_PREFIX', '');
 
     // Error handling configuration
     public static readonly SHOW_ERROR_STACK: boolean = Config.get('SHOW_ERROR_STACK', 'false').toLowerCase() === 'true';

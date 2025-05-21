@@ -4,14 +4,11 @@ import helmet from 'helmet';
 import proxy from 'express-http-proxy';
 import { requestIdMiddleware } from './middleware/requestId';
 import { authMiddleware } from './middleware/auth';
-import { requestValidationMiddleware } from './middleware/validation';
-import { responseInterceptor, errorHandler } from './middleware/response';
+import { errorHandler } from './middleware/response';
 import { services, isServiceConfigured, getServiceConfig } from './config/services';
 import { logger } from './utils/logger';
 import { AuthenticatedRequest } from './types/request';
 import { Config } from './config/config';
-import axios from 'axios';
-import identityRoutes from './routes/identity.routes';
 
 const app = express();
 
@@ -21,24 +18,33 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestIdMiddleware);
-app.use(responseInterceptor);
-
-// Use custom routes for identity service
-app.use('/api/auth', identityRoutes);
 
 // Proxy middleware to forward user claims and request ID
 const proxyMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const authenticatedReq = req as AuthenticatedRequest;
+    const pathParts = req.originalUrl.split('/');
+    const servicePrefix = pathParts[1] || '';
+    const isIdentityService = servicePrefix === 'id';
 
     // Forward request ID for idempotency
     req.headers['x-request-id'] = authenticatedReq.requestId;
 
-    if (authenticatedReq.user) {
+    // Forward Bearer token only to identity service
+    if (isIdentityService && req.headers.authorization) {
+        // Keep the Authorization header as is for identity service
+    } else {
+        // Remove Authorization header for other services
+        delete req.headers.authorization;
+    }
+
+    if (authenticatedReq.user && !isIdentityService) {
         // Basic user information
         req.headers['x-user-id'] = authenticatedReq.user.id;
         req.headers['x-user-email'] = authenticatedReq.user.email;
         req.headers['x-user-roles'] = authenticatedReq.user.roles.join(',');
-        req.headers['x-organization-id'] = authenticatedReq.user.organizationId;
+        if (authenticatedReq.user.organizationId) {
+            req.headers['x-organization-id'] = authenticatedReq.user.organizationId;
+        }
 
         // Additional user claims
         if (authenticatedReq.user.firstName) req.headers['x-user-first-name'] = authenticatedReq.user.firstName;
@@ -62,8 +68,9 @@ const proxyMiddleware = (req: express.Request, res: express.Response, next: expr
 
 // Service availability check middleware
 const serviceAvailabilityMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const servicePath = req.path.split('/')[1]; // Get the first path segment
-    const serviceName = `${servicePath}-service`;
+    const pathParts = req.originalUrl.split('/');
+    const servicePrefix = pathParts[1] || '';
+    const serviceName = `${servicePrefix}-service`;
 
     if (!isServiceConfigured(serviceName)) {
         return res.status(503).json({
@@ -97,22 +104,25 @@ const serviceAvailabilityMiddleware = (req: express.Request, res: express.Respon
 
 // Setup routes for each service
 services.forEach((service) => {
+    // Extract service identifier from service name (e.g., 'emp' from 'emp-service')
+    const serviceIdentifier = service.name.split('-')[0];
+    const path = `/${serviceIdentifier}`;
+
     app.use(
-        service.path,
+        path,
         authMiddleware,
-        requestValidationMiddleware,
         serviceAvailabilityMiddleware,
         proxyMiddleware,
-        proxy(service.url, {
+        (proxy(service.url, {
             proxyReqPathResolver: (req) => {
-                return `${service.path}${req.url}`;
+                return `${req.url}`;
             },
             proxyErrorHandler: (err, res, next) => {
                 logger.error(`Proxy error for ${service.name}:`, err);
                 res.status(503).json({
                     success: false,
                     timestamp: new Date().toISOString(),
-                    requestId: (res.req as AuthenticatedRequest).requestId,
+                    requestId: ((res.req as any) as AuthenticatedRequest).requestId,
                     error: {
                         code: 'SERVICE_UNAVAILABLE',
                         message: `${service.name} is currently unavailable`,
@@ -121,7 +131,7 @@ services.forEach((service) => {
                     }
                 });
             },
-        })
+        }) as any)
     );
 });
 

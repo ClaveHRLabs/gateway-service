@@ -7,9 +7,6 @@ const validateServiceConfig = (service: ServiceConfig): void => {
     if (!service.url) {
         throw new Error(`Service URL not configured for ${service.name}`);
     }
-    if (!service.path) {
-        throw new Error(`Service path not configured for ${service.name}`);
-    }
     if (!service.methods || service.methods.length === 0) {
         throw new Error(`Service methods not configured for ${service.name}`);
     }
@@ -18,9 +15,8 @@ const validateServiceConfig = (service: ServiceConfig): void => {
 // Service configuration with validation
 export const services: ServiceConfig[] = [
     {
-        name: 'employee-service',
-        url: Config.get('EMPLOYEE_SERVICE_URL', 'http://localhost:3001'),
-        path: '/api/employees',
+        name: 'emp-service',
+        url: Config.get('EMPLOYEE_SERVICE_URL', 'http://localhost:5004'),
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000, // 15 minutes
@@ -28,9 +24,8 @@ export const services: ServiceConfig[] = [
         },
     },
     {
-        name: 'performance-service',
-        url: Config.get('PERFORMANCE_SERVICE_URL', 'http://localhost:3002'),
-        path: '/api/performance',
+        name: 'perf-service',
+        url: Config.get('PERFORMANCE_SERVICE_URL', 'http://localhost:5003'),
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000,
@@ -38,9 +33,8 @@ export const services: ServiceConfig[] = [
         },
     },
     {
-        name: 'identity-service',
-        url: Config.get('IDENTITY_SERVICE_URL', 'http://localhost:3001'),
-        path: '/api/auth',
+        name: 'id-service',
+        url: Config.get('IDENTITY_SERVICE_URL', 'http://localhost:5002'),
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000,
