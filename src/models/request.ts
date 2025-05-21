@@ -32,7 +32,6 @@ export const requestHeadersSchema = z.object({
 // Request validation function
 export const validateRequestHeaders = (headers: Record<string, string>) => {
     try {
-        console.log('headers', headers);
         return requestHeadersSchema.parse(headers);
     } catch (error) {
         if (error instanceof z.ZodError) {

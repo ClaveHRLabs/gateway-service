@@ -1,117 +1,63 @@
 # Gateway Service
 
-Part of the ClaveHR platform, this service acts as the API Gateway, providing a unified entry point for all client requests. It handles request routing, authentication, and request/response transformation.
+A microservices API gateway that handles authentication, request routing, and service discovery.
 
 ## Features
 
-- **Request ID Generation**: Automatically generates and tracks unique request IDs for all incoming requests
-- **JWT Authentication**: Validates user information from JWT tokens
-- **Request Validation**: Validates incoming requests using Zod schemas
-- **Response Formatting**: Standardizes API responses with consistent error handling
-- **Service Proxying**: Routes requests to appropriate microservices
-- **Environment-based Configuration**: Configurable through environment variables
-- **Comprehensive Logging**: Detailed request/response logging with Winston
-- **Security**: Implements CORS, rate limiting, and security headers
-- **Health Checks**: Service health monitoring endpoints
+- Request routing to microservices
+- Authentication and authorization
+- Request ID tracking for distributed tracing
+- Rate limiting
+- Service health monitoring
+- Error handling and response formatting
 
-## Getting Started
+## Service Configuration
 
-### Prerequisites
+The gateway automatically routes requests based on the service name prefix:
 
-- Node.js 18+
-- Yarn or npm
-- Docker (optional, for containerization)
+- `/id/*` - Identity Service
+- `/emp/*` - Employee Service
+- `/perf/*` - Performance Service
 
-### Environment Variables
+## Authentication
 
-Create a `.env` file in the root directory with the following variables:
+- Bearer tokens are only forwarded to the Identity Service
+- Other services receive user claims via custom headers
+- All services receive the request ID for tracing
 
-```env
-# Server Configuration
-PORT=3000
-NODE_ENV=development
+## Headers
 
-# JWT Configuration
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRATION=1h
+The gateway adds the following headers to requests:
 
-# Service URLs
-IDENTITY_SERVICE_URL=http://localhost:3001
-AUTH_SERVICE_URL=http://localhost:3001
-USER_SERVICE_URL=http://localhost:3002
-COMPLIANCE_SERVICE_URL=http://localhost:3003
-CDN_SERVICE_URL=http://localhost:3004
-AI_SERVICE_URL=http://localhost:3005
-BACKUP_SERVICE_URL=http://localhost:3006
+- `x-request-id`: Unique request identifier
+- `x-user-id`: User's ID
+- `x-user-email`: User's email
+- `x-user-roles`: User's roles (comma-separated)
+- `x-organization-id`: User's organization ID (if available)
+- Additional user claims as needed
 
-# Error Handling
-SHOW_ERROR_STACK=false
-SHOW_ERROR_DETAILS=false
-```
-
-### Installation
+## Development
 
 ```bash
 # Install dependencies
-yarn install
+npm install
 
-# Build the project
-yarn build
-```
-
-### Development
-
-```bash
 # Start development server
-yarn dev
+npm run dev
 
 # Run tests
-yarn test
-
-# Run linter
-yarn lint
-
-# Format code
-yarn format
+npm test
 ```
 
-### API Testing
+## Environment Variables
 
-The project includes a `client.http` file for testing API endpoints using VS Code's REST Client extension. Configure the following variables in your environment:
-
-```http
-@baseUrl = http://localhost:3000
-@jwtToken = your_jwt_token
+```env
+PORT=5001
+IDENTITY_SERVICE_URL=http://localhost:5002
+EMPLOYEE_SERVICE_URL=http://localhost:5004
+PERFORMANCE_SERVICE_URL=http://localhost:5003
 ```
 
-## Project Structure
+## API Testing
 
-```
-src/
-├── config/         # Configuration management
-├── middleware/     # Express middleware
-├── models/         # Zod schemas and types
-├── services/       # Service configurations
-├── types/          # TypeScript type definitions
-└── utils/          # Utility functions
-```
-
-## Error Handling
-
-The service implements standardized error responses with the following structure:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Error message",
-    "details": {}, // Optional, controlled by SHOW_ERROR_DETAILS
-    "stack": "" // Optional, controlled by SHOW_ERROR_STACK
-  }
-}
-```
-
-## License
-
-This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for details.
+Use the `client.http` file in the `test` directory to test the API endpoints.

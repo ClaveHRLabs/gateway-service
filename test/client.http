@@ -12,3 +12,11 @@ Authorization: Bearer {{jwtToken}}
 ### Identity Service - Public Endpoint
 GET {{baseUrl}}/id/health
 Authorization: Bearer {{jwtToken}}
+
+### Employee Service - Get All Employees
+GET {{baseUrl}}/emp/api/employees
+Authorization: Bearer {{jwtToken}}
+
+### Performance Service - Get All Reviews
+GET {{baseUrl}}/perf/api/reviews
+Authorization: Bearer {{jwtToken}}
