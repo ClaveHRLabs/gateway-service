@@ -9,6 +9,5 @@ export const requestIdMiddleware = (
 ) => {
     const requestId = req.headers['x-request-id'] as string || uuidv4();
     (req as AuthenticatedRequest).requestId = requestId;
-    res.setHeader('x-request-id', requestId);
     next();
 }; 

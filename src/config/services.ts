@@ -21,7 +21,7 @@ export const services: ServiceConfig[] = [
     {
         name: 'emp-service',
         url: getServiceUrl('EMPLOYEE_SERVICE_URL', 'http://localhost:5004'),
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000, // 15 minutes
             max: 100, // limit each IP to 100 requests per windowMs
@@ -30,7 +30,7 @@ export const services: ServiceConfig[] = [
     {
         name: 'perf-service',
         url: getServiceUrl('PERFORMANCE_SERVICE_URL', 'http://localhost:5003'),
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000,
             max: 100,
@@ -39,7 +39,7 @@ export const services: ServiceConfig[] = [
     {
         name: 'id-service',
         url: getServiceUrl('IDENTITY_SERVICE_URL', 'http://localhost:5002'),
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000,
             max: 100,

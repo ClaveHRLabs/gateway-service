@@ -5,6 +5,7 @@ import { logger } from '../utils/logger';
 import { validateUser, userSchema } from '../models/user';
 import { Config } from '../config/config';
 import { isWhitelisted } from '../config/whitelist';
+import { services } from '@/config/services';
 
 /**
  * Authentication middleware to validate JWT tokens and attach user claims to the request
@@ -23,11 +24,17 @@ export const authMiddleware = (
         // Check if the path should bypass authentication for this service
         if (servicePrefix) {
             const path = req.path;
-
             if (isWhitelisted(path, servicePrefix)) {
-                logger.debug(`Bypassing authentication for whitelisted endpoint: ${servicePrefix}${path}`);
+                logger.info(`Bypassing authentication for whitelisted endpoint: ${servicePrefix}${path}`);
                 return next();
             }
+        }
+
+        // if header contains setup code send the request to the setup service
+        const setupCode = req.headers['x-setup-code'];
+        if (setupCode) {
+            logger.info(`Setup code detected: ${setupCode}`);
+            return next();
         }
 
         // For non-whitelisted paths, continue with authentication

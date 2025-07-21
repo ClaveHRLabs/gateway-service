@@ -9,8 +9,6 @@ import { services, getServiceConfig } from '../config/services';
  * Generic proxy middleware that handles routing to any service
  */
 export const proxyMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-    logger.debug(`Proxy middleware called for ${req.originalUrl}`);
-
     try {
         const authenticatedReq = req as AuthenticatedRequest;
 
@@ -61,6 +59,7 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
 
         // Forward auth and setup headers for identity service
         if (isIdentityService) {
+            // if path contains /api/organizations/ send the request to the setup service
             // Always forward Authorization header to identity service
             if (req.headers.authorization) {
                 headers['Authorization'] = req.headers.authorization as string;
@@ -68,7 +67,6 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
 
             // Always forward X-Setup-Code header to identity service, especially for org APIs
             if (req.headers['x-setup-code']) {
-                logger.debug(`Forwarding X-Setup-Code header for ${req.path}`);
                 headers['x-setup-code'] = req.headers['x-setup-code'] as string;
             }
         } else {
