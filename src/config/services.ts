@@ -1,6 +1,10 @@
 import { ServiceConfig } from '../types/request';
-import { Config } from './config';
 import { logger } from '../utils/logger';
+
+// Get service URLs directly from environment variables to avoid circular dependencies
+const getServiceUrl = (envVarName: string, defaultValue: string): string => {
+    return process.env[envVarName] || defaultValue;
+};
 
 // Validate service configuration
 const validateServiceConfig = (service: ServiceConfig): void => {
@@ -16,7 +20,7 @@ const validateServiceConfig = (service: ServiceConfig): void => {
 export const services: ServiceConfig[] = [
     {
         name: 'emp-service',
-        url: Config.get('EMPLOYEE_SERVICE_URL', 'http://localhost:5004'),
+        url: getServiceUrl('EMPLOYEE_SERVICE_URL', 'http://localhost:5004'),
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000, // 15 minutes
@@ -25,7 +29,7 @@ export const services: ServiceConfig[] = [
     },
     {
         name: 'perf-service',
-        url: Config.get('PERFORMANCE_SERVICE_URL', 'http://localhost:5003'),
+        url: getServiceUrl('PERFORMANCE_SERVICE_URL', 'http://localhost:5003'),
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000,
@@ -34,7 +38,7 @@ export const services: ServiceConfig[] = [
     },
     {
         name: 'id-service',
-        url: Config.get('IDENTITY_SERVICE_URL', 'http://localhost:5002'),
+        url: getServiceUrl('IDENTITY_SERVICE_URL', 'http://localhost:5002'),
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000,

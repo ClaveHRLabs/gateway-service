@@ -1,22 +1,115 @@
+### Gateway Service API Test File
 @baseUrl = http://localhost:5001
-@jwtToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhNDcxYjY0Ni04ODQwLTRhZjAtYTA5OC02NDhiZWFhOGNlYjMiLCJpZCI6ImE0NzFiNjQ2LTg4NDAtNGFmMC1hMDk4LTY0OGJlYWE4Y2ViMyIsImVtYWlsIjoibWFuaWJhYnVAZ29lc3Nvci5jb20iLCJmaXJzdE5hbWUiOiJNYW5pYmFidSIsImxhc3ROYW1lIjoiUGlwcGFsbGEiLCJyb2xlIjoiZW1wbG95ZWUiLCJyb2xlcyI6W10sInN0YXR1cyI6ImFjdGl2ZSIsIm9yZ2FuaXphdGlvbklkIjpudWxsLCJ0eXBlIjoiYWNjZXNzIiwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NDc4MjY0NTgsImV4cCI6MTc0NzgzMDA1OH0.Pua-bG2Qgv-gU0hdf5fGZf4_JLj3a8EMw_htWJ3B0EY
 
-### Health Check
+
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZjQ1MzJiZi1hNjZiLTRiMGYtYmM3Ny00ZjkzNGIyNjZiYmUiLCJpZCI6ImFmNDUzMmJmLWE2NmItNGIwZi1iYzc3LTRmOTM0YjI2NmJiZSIsImVtYWlsIjoibWFuaWJhYnVAZ29lc3Nvci5jb20iLCJmaXJzdE5hbWUiOiJNYW5pYmFidSIsImxhc3ROYW1lIjoiUGlwcGFsbGEiLCJyb2xlIjoiZW1wbG95ZWUiLCJyb2xlcyI6W10sInN0YXR1cyI6ImFjdGl2ZSIsIm9yZ2FuaXphdGlvbklkIjpudWxsLCJ0eXBlIjoiYWNjZXNzIiwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NTMxMDk4MTMsImV4cCI6MTc1MzExMzQxM30.DzB8LYBefqljxXDn13w_em8KWaOUiU9fb-vgtcNNWyg
+
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZjQ1MzJiZi1hNjZiLTRiMGYtYmM3Ny00ZjkzNGIyNjZiYmUiLCJpZCI6ImFmNDUzMmJmLWE2NmItNGIwZi1iYzc3LTRmOTM0YjI2NmJiZSIsImVtYWlsIjoibWFuaWJhYnVAZ29lc3Nvci5jb20iLCJmaXJzdE5hbWUiOiJNYW5pYmFidSIsImxhc3ROYW1lIjoiUGlwcGFsbGEiLCJyb2xlIjoiZW1wbG95ZWUiLCJyb2xlcyI6W10sInN0YXR1cyI6ImFjdGl2ZSIsIm9yZ2FuaXphdGlvbklkIjpudWxsLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc1MzEwODQ2MywiZXhwIjoxNzUzNzEzMjYzfQ.tyP-i5Pi8e7qr00bmc4PSj7HP-ygRpdXsUxnKZkFPB0
+
+### Health check endpoint
 GET {{baseUrl}}/health
-Authorization: Bearer {{jwtToken}}
+Content-Type: application/json
 
-### Identity Service - Get Current User
-GET {{baseUrl}}/id/api/users/me
-Authorization: Bearer {{jwtToken}}
-
-### Identity Service - Public Endpoint
+### Identity Service - Health (public endpoint)
 GET {{baseUrl}}/id/health
-Authorization: Bearer {{jwtToken}}
+Content-Type: application/json
 
-### Employee Service - Get All Employees
+### Identity Service - Send Magic Link (public endpoint)
+POST {{baseUrl}}/id/api/auth/magic-link
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "redirect_uri": "http://localhost:3000/verify-email"
+}
+
+### Identity Service - Verify Magic Link (public endpoint)
+POST {{baseUrl}}/id/api/auth/verify-magic-link
+Content-Type: application/json
+
+{
+  "token": "example-verification-token"
+}
+
+### Identity Service - Refresh Token (public endpoint)
+POST {{baseUrl}}/id/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Identity Service - OAuth URL (public endpoint)
+GET {{baseUrl}}/id/api/auth/google/authorize?redirect_uri=http://localhost:3000/auth/callback/google
+Content-Type: application/json
+
+### Identity Service - OAuth Callback (public endpoint)
+POST {{baseUrl}}/id/api/auth/github
+Content-Type: application/json
+
+{
+  "code": "example-oauth-code",
+  "redirect_uri": "http://localhost:3000/auth/callback/github"
+}
+
+### Identity Service - Setup Code Validation (public endpoint)
+POST {{baseUrl}}/id/api/setup-codes/validate
+Content-Type: application/json
+
+{
+  "code": "CLAVE-WFG-WMKM"
+}
+
+### Identity Service - Organization Update with Setup Code (requires X-Setup-Code header)
+PATCH {{baseUrl}}/id/api/organizations/org-123
+Content-Type: application/json
+X-Setup-Code: example-setup-code-12345
+
+{
+  "name": "Updated Organization Name",
+  "industry": "Technology",
+  "size": "50-100"
+}
+
+### Identity Service - Organization Branding with Setup Code (requires X-Setup-Code header)
+PATCH {{baseUrl}}/id/api/organizations/org-123/branding
+Content-Type: application/json
+X-Setup-Code: example-setup-code-12345
+
+{
+  "logo_url": "https://example.com/logo.png",
+  "primary_color": "#1a73e8",
+  "secondary_color": "#f1f3f4"
+}
+
+### Identity Service - Complete Organization Setup with Setup Code (requires X-Setup-Code header)
+POST {{baseUrl}}/id/api/organizations/org-123/complete-setup
+Content-Type: application/json
+X-Setup-Code: example-setup-code-12345
+
+{}
+
+### Identity Service - Current User (authenticated endpoint)
+GET {{baseUrl}}/id/api/users/me
+Content-Type: application/json
+Authorization: Bearer example-access-token
+
+### Identity Service - Organization Details (authenticated endpoint)
+GET {{baseUrl}}/id/api/organizations/org-123
+Content-Type: application/json
+Authorization: Bearer example-access-token
+
+### Employee Service - Get Employees (authenticated endpoint)
 GET {{baseUrl}}/emp/api/employees
-Authorization: Bearer {{jwtToken}}
+Content-Type: application/json
+Authorization: Bearer example-access-token
 
-### Performance Service - Get All Reviews
+### Performance Service - Get Reviews (authenticated endpoint)
 GET {{baseUrl}}/perf/api/reviews
-Authorization: Bearer {{jwtToken}}
+Content-Type: application/json
+Authorization: Bearer example-access-token
+
+### Example of a custom service (if added to services.ts)
+# GET {{baseUrl}}/custom/api/resource
+# Content-Type: application/json
+# Authorization: Bearer example-access-token

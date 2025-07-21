@@ -18,7 +18,16 @@ export class Config {
     public static readonly SHOW_ERROR_STACK: boolean = Config.get('SHOW_ERROR_STACK', 'false').toLowerCase() === 'true';
     public static readonly SHOW_ERROR_DETAILS: boolean = Config.get('SHOW_ERROR_DETAILS', 'false').toLowerCase() === 'true';
 
-    // Add more variables as needed
+    // Authentication bypass patterns by service
+    public static readonly ID_PUBLIC_ENDPOINTS: string = Config.get('ID_PUBLIC_ENDPOINTS', '');
+    public static readonly EMP_PUBLIC_ENDPOINTS: string = Config.get('EMP_PUBLIC_ENDPOINTS', '');
+    public static readonly PERF_PUBLIC_ENDPOINTS: string = Config.get('PERF_PUBLIC_ENDPOINTS', '');
+
+    // Helper method to get env variable for a service's public endpoints
+    public static getPublicEndpoints(servicePrefix: string): string {
+        const envVar = `${servicePrefix.toUpperCase()}_PUBLIC_ENDPOINTS`;
+        return Config.get(envVar, '');
+    }
 
     private static getRequired(key: string): string {
         const value = process.env[key];

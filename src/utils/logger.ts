@@ -1,8 +1,11 @@
 import winston from 'winston';
-import { Config } from '../config/config';
+
+// Get log level from environment variable directly instead of using Config
+// This breaks the circular dependency
+const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 
 export const logger = winston.createLogger({
-    level: Config.LOG_LEVEL,
+    level: LOG_LEVEL,
     format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.json()
