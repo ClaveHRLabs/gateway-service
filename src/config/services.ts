@@ -19,8 +19,17 @@ const validateServiceConfig = (service: ServiceConfig): void => {
 // Service configuration with validation
 export const services: ServiceConfig[] = [
     {
+        name: 'id-service',
+        url: getServiceUrl('IDENTITY_SERVICE_URL', 'http://localhost:5002'),
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        rateLimit: {
+            windowMs: 15 * 60 * 1000,
+            max: 100,
+        },
+    },
+    {
         name: 'emp-service',
-        url: getServiceUrl('EMPLOYEE_SERVICE_URL', 'http://localhost:5004'),
+        url: getServiceUrl('EMPLOYEE_SERVICE_URL', 'http://localhost:5003'),
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000, // 15 minutes
@@ -29,16 +38,7 @@ export const services: ServiceConfig[] = [
     },
     {
         name: 'perf-service',
-        url: getServiceUrl('PERFORMANCE_SERVICE_URL', 'http://localhost:5003'),
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        rateLimit: {
-            windowMs: 15 * 60 * 1000,
-            max: 100,
-        },
-    },
-    {
-        name: 'id-service',
-        url: getServiceUrl('IDENTITY_SERVICE_URL', 'http://localhost:5002'),
+        url: getServiceUrl('PERFORMANCE_SERVICE_URL', 'http://localhost:5004'),
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000,
