@@ -92,6 +92,11 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
             if (authenticatedReq.user.organizationId) {
                 headers['x-organization-id'] = authenticatedReq.user.organizationId;
             }
+            
+            // Forward employee ID if available
+            if (authenticatedReq.user.employeeId) {
+                headers['x-employee-id'] = authenticatedReq.user.employeeId;
+            }
 
             // Additional user claims
             if (authenticatedReq.user.firstName) headers['x-user-first-name'] = authenticatedReq.user.firstName;

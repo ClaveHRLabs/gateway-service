@@ -27,6 +27,7 @@ export const requestHeadersSchema = z.object({
     'x-user-last-login': z.string().datetime().optional(),
     'x-user-is-active': z.string().transform(val => val === 'true').optional(),
     'x-user-metadata': z.string().transform(val => JSON.parse(val)).optional(),
+    'x-employee-id': z.string().uuid().optional(),
 }).passthrough();
 
 // Request validation function

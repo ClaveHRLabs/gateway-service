@@ -34,6 +34,7 @@ export const baseUserSchema = z.object({
     iat: z.number().optional(),
     exp: z.number().optional(),
     sub: z.string().optional(),
+    employeeId: z.string().regex(patterns.uuid).optional(),
 });
 
 // User roles

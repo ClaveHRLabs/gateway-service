@@ -13,6 +13,7 @@ export type UserClaims = z.infer<typeof baseUserSchema> & {
     timezone?: string;
     lastLogin?: string;
     isActive?: boolean;
+    employeeId?: string;
 };
 
 export interface AuthenticatedRequest extends Request {
