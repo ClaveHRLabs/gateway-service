@@ -1,9 +1,57 @@
 import { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
+import proxy from 'express-http-proxy';
 import { logger } from '../utils/logger';
 import { AuthenticatedRequest } from '../types/request';
 import { Config } from '../config/config';
 import { services, getServiceConfig } from '../config/services';
+
+/**
+ * Helper function to create a proxy middleware for multipart/form-data requests
+ */
+export const createMultipartProxy = (serviceUrl: string) => {
+    return proxy(serviceUrl, {
+        proxyReqPathResolver: function(req) {
+            return req.path;
+        },
+        proxyReqOptDecorator: function(proxyReqOpts, srcReq) {
+            // We need to handle headers properly for TypeScript
+            if (!proxyReqOpts.headers) {
+                proxyReqOpts.headers = {};
+            }
+            
+            // Forward the original headers that we need
+            const srcHeaders = srcReq.headers;
+            if (srcHeaders['x-request-id']) {
+                proxyReqOpts.headers['x-request-id'] = srcHeaders['x-request-id'];
+            }
+            
+            // We need to keep the original content-type for multipart/form-data
+            if (srcHeaders['content-type']) {
+                proxyReqOpts.headers['content-type'] = srcHeaders['content-type'];
+            }
+            
+            // Forward auth header if present
+            if (srcHeaders.authorization) {
+                proxyReqOpts.headers.authorization = srcHeaders.authorization;
+            }
+            
+            // Copy other important headers from the source request
+            const headersToForward = [
+                'x-organization-id', 'x-user-id', 'x-user-email',
+                'x-user-roles', 'x-employee-id', 'x-setup-code'
+            ];
+            
+            headersToForward.forEach(header => {
+                if (srcHeaders[header]) {
+                    proxyReqOpts.headers[header] = srcHeaders[header];
+                }
+            });
+            
+            return proxyReqOpts;
+        }
+    });
+};
 
 /**
  * Generic proxy middleware that handles routing to any service
@@ -46,16 +94,43 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
             });
         }
 
+        // Special handling for multipart/form-data requests
+        if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
+            logger.info(`Using direct proxy for multipart/form-data request to ${serviceConfig.url}`);
+            
+            // Add user headers to the request before proxying
+            if (authenticatedReq.user) {
+                req.headers['x-user-id'] = authenticatedReq.user.id;
+                req.headers['x-user-email'] = authenticatedReq.user.email;
+                req.headers['x-user-roles'] = authenticatedReq.user.roles.join(',');
+                
+                if (authenticatedReq.user.organizationId) {
+                    req.headers['x-organization-id'] = authenticatedReq.user.organizationId;
+                }
+                
+                if (authenticatedReq.user.employeeId) {
+                    req.headers['x-employee-id'] = authenticatedReq.user.employeeId;
+                }
+            }
+            
+            // Use the specialized proxy for multipart requests
+            return createMultipartProxy(serviceConfig.url)(req, res, next);
+        }
+
         // Prepare headers
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json'
-        };
+        const headers: Record<string, string> = {};
+
+        // Preserve original Content-Type header
+        if (req.headers['content-type']) {
+            headers['Content-Type'] = req.headers['content-type'] as string;
+        } else {
+            headers['Content-Type'] = 'application/json';
+        }
 
         // Forward request ID for idempotency
         headers['x-request-id'] = authenticatedReq.requestId || '';
 
         const isIdentityService = servicePrefix === 'id';
-        const isOrgApi = req.path.includes('/api/organizations/');
 
         // Forward auth and setup headers for identity service
         if (isIdentityService) {
@@ -121,9 +196,7 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
         const targetUrl = `${serviceConfig.url}${path}`;
         const method = req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-        logger.debug(`Proxying ${method} request to: ${targetUrl}`);
-
-        // Execute the request based on the method
+        // Execute the request based on the method  
         let response;
         switch (method) {
             case 'GET':
@@ -133,7 +206,25 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
                 });
                 break;
             case 'POST':
-                response = await axios.post(targetUrl, req.body, { headers });
+                // For multipart/form-data requests, we need special handling
+                if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
+                    logger.info(`Forwarding multipart/form-data request to ${targetUrl}`);
+                    
+                    // Create a pass-through proxy request
+                    // We don't try to parse or modify the multipart data, just pass it through
+                    response = await axios.post(targetUrl, req, {
+                        headers,
+                        maxBodyLength: Infinity,
+                        maxContentLength: Infinity,
+                        transformRequest: [(data, headers) => {
+                            // Return the raw request data
+                            return data;
+                        }]
+                    });
+                } else {
+                    // For regular JSON requests
+                    response = await axios.post(targetUrl, req.body, { headers });
+                }
                 break;
             case 'PUT':
                 response = await axios.put(targetUrl, req.body, { headers });

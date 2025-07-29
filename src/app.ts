@@ -20,8 +20,28 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-setup-code', 'x-skip-auth', 'x-request-id'],
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Only parse JSON and URL-encoded bodies when not multipart/form-data
+app.use((req, res, next) => {
+    const contentType = req.headers['content-type'] || '';
+    if (contentType.includes('multipart/form-data')) {
+        // Skip body parsing for multipart/form-data requests
+        next();
+    } else {
+        express.json()(req, res, next);
+    }
+});
+
+app.use((req, res, next) => {
+    const contentType = req.headers['content-type'] || '';
+    if (contentType.includes('multipart/form-data')) {
+        // Skip body parsing for multipart/form-data requests
+        next();
+    } else {
+        express.urlencoded({ extended: true })(req, res, next);
+    }
+});
+
 app.use(requestIdMiddleware);
 
 // Health check endpoint
