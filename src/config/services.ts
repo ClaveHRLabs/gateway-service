@@ -46,6 +46,15 @@ export const services: ServiceConfig[] = [
         },
     },
     {
+        name: 'rec-service',
+        url: getServiceUrl('RECRUITMENT_SERVICE_URL', 'http://localhost:5004'),
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        rateLimit: {
+            windowMs: 15 * 60 * 1000,
+            max: 100,
+        },
+    },
+    {
         name: 'nt-service',
         url: getServiceUrl('NOTIFICATION_SERVICE_URL', 'http://localhost:5010'),
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],

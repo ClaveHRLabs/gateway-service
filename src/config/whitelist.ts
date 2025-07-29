@@ -31,6 +31,15 @@ const defaultPublicPatterns: Record<string, Array<string | RegExp>> = {
     // Add other services' public endpoints here
     // 'emp': ['/health', '/api/public/*'],
     // 'perf': ['/health', '/api/public/*'],
+    
+    // Recruitment service public endpoints
+    'rec': [
+        // Health checks
+        '/health',
+        
+        // Public recruitment endpoints
+        /^\/api\/public\/.*/
+    ],
 };
 
 // Get additional public endpoint patterns from environment variables
