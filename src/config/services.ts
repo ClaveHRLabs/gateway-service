@@ -37,15 +37,6 @@ export const services: ServiceConfig[] = [
         },
     },
     {
-        name: 'perf-service',
-        url: getServiceUrl('PERFORMANCE_SERVICE_URL', 'http://localhost:5004'),
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        rateLimit: {
-            windowMs: 15 * 60 * 1000,
-            max: 100,
-        },
-    },
-    {
         name: 'rec-service',
         url: getServiceUrl('RECRUITMENT_SERVICE_URL', 'http://localhost:5004'),
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -57,6 +48,15 @@ export const services: ServiceConfig[] = [
     {
         name: 'eng-service',
         url: getServiceUrl('ENGAGEMENT_SERVICE_URL', 'http://localhost:5005'),
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        rateLimit: {
+            windowMs: 15 * 60 * 1000,
+            max: 100,
+        },
+    },
+    {
+        name: 'perf-service',
+        url: getServiceUrl('PERFORMANCE_SERVICE_URL', 'http://localhost:5006'),
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         rateLimit: {
             windowMs: 15 * 60 * 1000,
