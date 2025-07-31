@@ -55,6 +55,15 @@ export const services: ServiceConfig[] = [
         },
     },
     {
+        name: 'eng-service',
+        url: getServiceUrl('ENGAGEMENT_SERVICE_URL', 'http://localhost:5005'),
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        rateLimit: {
+            windowMs: 15 * 60 * 1000,
+            max: 100,
+        },
+    },
+    {
         name: 'nt-service',
         url: getServiceUrl('NOTIFICATION_SERVICE_URL', 'http://localhost:5010'),
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -63,6 +72,7 @@ export const services: ServiceConfig[] = [
             max: 100,
         },
     },
+    
     // Add other services as needed
 ].map(service => {
     try {
