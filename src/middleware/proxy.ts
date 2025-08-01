@@ -11,43 +11,50 @@ import { services, getServiceConfig } from '../config/services';
  */
 export const createMultipartProxy = (serviceUrl: string) => {
     return proxy(serviceUrl, {
-        proxyReqPathResolver: function(req) {
+        proxyReqPathResolver: function (req) {
             return req.path;
         },
-        proxyReqOptDecorator: function(proxyReqOpts, srcReq) {
+        proxyReqOptDecorator: function (proxyReqOpts, srcReq) {
             // We need to handle headers properly for TypeScript
             if (!proxyReqOpts.headers) {
                 proxyReqOpts.headers = {};
             }
-            
+
             // Forward the original headers that we need
             const srcHeaders = srcReq.headers;
-            if (srcHeaders['x-request-id']) {
-                proxyReqOpts.headers['x-request-id'] = srcHeaders['x-request-id'];
-            }
-            
-            // We need to keep the original content-type for multipart/form-data
-            if (srcHeaders['content-type']) {
-                proxyReqOpts.headers['content-type'] = srcHeaders['content-type'];
-            }
-            
-            // Forward auth header if present
-            if (srcHeaders.authorization) {
-                proxyReqOpts.headers.authorization = srcHeaders.authorization;
-            }
-            
-            // Copy other important headers from the source request
-            const headersToForward = [
-                'x-organization-id', 'x-user-id', 'x-user-email',
-                'x-user-roles', 'x-employee-id', 'x-setup-code'
-            ];
-            
-            headersToForward.forEach(header => {
-                if (srcHeaders[header]) {
-                    proxyReqOpts.headers[header] = srcHeaders[header];
+            if (srcHeaders && typeof srcHeaders === 'object') {
+                // Safely handle x-request-id
+                const requestId = srcHeaders['x-request-id'];
+                if (requestId && proxyReqOpts.headers) {
+                    proxyReqOpts.headers['x-request-id'] = requestId;
                 }
-            });
-            
+
+                // Safely handle content-type
+                const contentType = srcHeaders['content-type'];
+                if (contentType && proxyReqOpts.headers) {
+                    proxyReqOpts.headers['content-type'] = contentType;
+                }
+
+                // Safely handle authorization
+                const authorization = srcHeaders.authorization;
+                if (authorization && proxyReqOpts.headers) {
+                    proxyReqOpts.headers['authorization'] = authorization;
+                }
+
+                // Copy other important headers from the source request
+                const headersToForward = [
+                    'x-organization-id', 'x-user-id', 'x-user-email',
+                    'x-user-roles', 'x-employee-id', 'x-setup-code'
+                ];
+
+                headersToForward.forEach(header => {
+                    const value = srcHeaders[header];
+                    if (value && proxyReqOpts.headers) {
+                        proxyReqOpts.headers[header] = value;
+                    }
+                });
+            }
+
             return proxyReqOpts;
         }
     });
@@ -97,24 +104,26 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
         // Special handling for multipart/form-data requests
         if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
             logger.info(`Using direct proxy for multipart/form-data request to ${serviceConfig.url}`);
-            
+
             // Add user headers to the request before proxying
             if (authenticatedReq.user) {
                 req.headers['x-user-id'] = authenticatedReq.user.id;
                 req.headers['x-user-email'] = authenticatedReq.user.email;
                 req.headers['x-user-roles'] = authenticatedReq.user.roles.join(',');
-                
+
                 if (authenticatedReq.user.organizationId) {
                     req.headers['x-organization-id'] = authenticatedReq.user.organizationId;
                 }
-                
+
                 if (authenticatedReq.user.employeeId) {
                     req.headers['x-employee-id'] = authenticatedReq.user.employeeId;
                 }
             }
-            
+
             // Use the specialized proxy for multipart requests
-            return createMultipartProxy(serviceConfig.url)(req, res, next);
+            // Type-cast to avoid TypeScript errors with incompatible Request types
+            const handler = createMultipartProxy(serviceConfig.url);
+            return handler(req as any, res, next);
         }
 
         // Prepare headers
@@ -167,7 +176,7 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
             if (authenticatedReq.user.organizationId) {
                 headers['x-organization-id'] = authenticatedReq.user.organizationId;
             }
-            
+
             // Forward employee ID if available
             if (authenticatedReq.user.employeeId) {
                 headers['x-employee-id'] = authenticatedReq.user.employeeId;
@@ -209,7 +218,7 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
                 // For multipart/form-data requests, we need special handling
                 if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
                     logger.info(`Forwarding multipart/form-data request to ${targetUrl}`);
-                    
+
                     // Create a pass-through proxy request
                     // We don't try to parse or modify the multipart data, just pass it through
                     response = await axios.post(targetUrl, req, {
@@ -281,4 +290,4 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
             }
         });
     }
-}; 
+};
