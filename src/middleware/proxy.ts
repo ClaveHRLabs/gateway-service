@@ -1,10 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import proxy from 'express-http-proxy';
+import { OutgoingHttpHeaders } from 'http';
 import { logger } from '../utils/logger';
 import { AuthenticatedRequest } from '../types/request';
 import { Config } from '../config/config';
 import { services, getServiceConfig } from '../config/services';
+
+// Type augmentation for headers to prevent TypeScript errors
+interface ExtendedHeaders extends OutgoingHttpHeaders {
+    [key: string]: string | string[] | number | undefined;
+}
 
 /**
  * Helper function to create a proxy middleware for multipart/form-data requests
@@ -20,25 +26,28 @@ export const createMultipartProxy = (serviceUrl: string) => {
                 proxyReqOpts.headers = {};
             }
 
+            // Cast headers to our extended type
+            const headers = proxyReqOpts.headers as ExtendedHeaders;
+
             // Forward the original headers that we need
             const srcHeaders = srcReq.headers;
             if (srcHeaders && typeof srcHeaders === 'object') {
                 // Safely handle x-request-id
                 const requestId = srcHeaders['x-request-id'];
-                if (requestId && proxyReqOpts.headers) {
-                    proxyReqOpts.headers['x-request-id'] = requestId;
+                if (requestId) {
+                    headers['x-request-id'] = requestId.toString();
                 }
 
                 // Safely handle content-type
                 const contentType = srcHeaders['content-type'];
-                if (contentType && proxyReqOpts.headers) {
-                    proxyReqOpts.headers['content-type'] = contentType;
+                if (contentType) {
+                    headers['content-type'] = contentType.toString();
                 }
 
                 // Safely handle authorization
                 const authorization = srcHeaders.authorization;
-                if (authorization && proxyReqOpts.headers) {
-                    proxyReqOpts.headers['authorization'] = authorization;
+                if (authorization) {
+                    headers['authorization'] = authorization.toString();
                 }
 
                 // Copy other important headers from the source request
@@ -49,8 +58,8 @@ export const createMultipartProxy = (serviceUrl: string) => {
 
                 headersToForward.forEach(header => {
                     const value = srcHeaders[header];
-                    if (value && proxyReqOpts.headers) {
-                        proxyReqOpts.headers[header] = value;
+                    if (value) {
+                        headers[header] = value.toString();
                     }
                 });
             }
@@ -121,9 +130,10 @@ export const proxyMiddleware = async (req: Request, res: Response, next: NextFun
             }
 
             // Use the specialized proxy for multipart requests
-            // Type-cast to avoid TypeScript errors with incompatible Request types
+            // Use double type assertion to resolve typescript issue
             const handler = createMultipartProxy(serviceConfig.url);
-            return handler(req as any, res, next);
+            handler(req as any, res as any, next);
+            return;
         }
 
         // Prepare headers
