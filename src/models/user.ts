@@ -56,7 +56,7 @@ export const userSchema = baseUserSchema.extend({
     updatedAt: z.string().regex(patterns.date, messages.invalidDate).optional(),
     lastLoginAt: z.string().regex(patterns.date, messages.invalidDate).optional(),
     departmentId: z.string().regex(patterns.uuid).optional(),
-    managerId: z.string().regex(patterns.uuid).optional(),
+    managerId: z.string().regex(patterns.uuid).optional().nullable(),
     preferences: z.object({
         language: z.string().min(2).max(5),
         timezone: z.string(),
