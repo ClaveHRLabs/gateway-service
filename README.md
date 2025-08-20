@@ -75,7 +75,7 @@ The gateway automatically forwards appropriate headers to backend services:
 - `x-request-id`: Unique request identifier for tracing
 - `Authorization`: Bearer token (only for identity service)
 - User claims for authenticated requests (for non-identity services):
-  - `x-user-id`, `x-user-email`, `x-user-roles`, etc.
+    - `x-user-id`, `x-user-email`, `x-user-roles`, etc.
 
 ## Standardized Response Format
 

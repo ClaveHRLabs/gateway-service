@@ -13,8 +13,7 @@ Documents:
 - document.md – Documents, signatures, shares
 
 Conventions:
+
 - Request/Response bodies are shown with field names, types, and optionality
 - All endpoints require `Authorization: Bearer <token>` unless noted as public
 - Gateway adds user context headers when proxying requests
-
-

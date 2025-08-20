@@ -1,21 +1,6 @@
-import winston from 'winston';
+import { createLogger } from '@vspl/core';
 
-// Get log level from environment variable directly instead of using Config
-// This breaks the circular dependency
-const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+// Gateway logger now uses core logger with automatic caller tagging
+export const logger = createLogger({ service: 'gateway' });
 
-export const logger = winston.createLogger({
-    level: LOG_LEVEL,
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console({
-            format: winston.format.combine(
-                winston.format.colorize(),
-                winston.format.simple()
-            ),
-        }),
-    ],
-}); 
+export default logger;

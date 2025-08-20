@@ -6,6 +6,7 @@ Auth: Bearer token required unless stated public (public endpoints under /rec/ap
 Standard response envelope (see docs/README.md)
 
 ## Candidates
+
 - GET /rec/api/candidates
 - GET /rec/api/candidates/:id
 - POST /rec/api/candidates { ...candidate }
@@ -15,13 +16,14 @@ Standard response envelope (see docs/README.md)
 - PUT /rec/api/candidates/applications/:applicationId/status { status }
 - GET /rec/api/candidates/applications/:candidateId/:requisitionId/check
 - Bulk:
-  - POST /rec/api/candidates/bulk/status { candidate_ids: uuid[], status }
-  - POST /rec/api/candidates/bulk/stage { candidate_ids: uuid[], stage }
-  - POST /rec/api/candidates/bulk/schedule-interview { candidate_ids: uuid[], ... }
-  - POST /rec/api/candidates/bulk/email { candidate_ids: uuid[], subject, body }
-  - POST /rec/api/candidates/bulk/reject { candidate_ids: uuid[], reason }
+    - POST /rec/api/candidates/bulk/status { candidate_ids: uuid[], status }
+    - POST /rec/api/candidates/bulk/stage { candidate_ids: uuid[], stage }
+    - POST /rec/api/candidates/bulk/schedule-interview { candidate_ids: uuid[], ... }
+    - POST /rec/api/candidates/bulk/email { candidate_ids: uuid[], subject, body }
+    - POST /rec/api/candidates/bulk/reject { candidate_ids: uuid[], reason }
 
 ## Requisitions
+
 - GET /rec/api/requisitions
 - GET /rec/api/requisitions/:id
 - POST /rec/api/requisitions { ...requisition }
@@ -40,6 +42,7 @@ Standard response envelope (see docs/README.md)
 - POST /rec/api/requisitions/:id/add-candidate { candidate_id, notes?, source? }
 
 ## Offers
+
 - GET /rec/api/offers
 - GET /rec/api/offers/:id
 - POST /rec/api/applications/:applicationId/offers { ...offer }
@@ -52,6 +55,7 @@ Standard response envelope (see docs/README.md)
 - GET /rec/api/offers/:id/approvals
 
 ## Interviews
+
 - GET /rec/api/interviews
 - GET /rec/api/interviews/application/:applicationId
 - GET /rec/api/interviews/:id
@@ -68,6 +72,7 @@ Standard response envelope (see docs/README.md)
 - DELETE /rec/api/interviews/:id/feedback/:feedbackId
 
 ## Analytics
+
 - GET /rec/api/analytics/recruitment?time_range=...
 - GET /rec/api/analytics/applications?time_range=...
 - GET /rec/api/analytics/interviews?time_range=...
@@ -77,9 +82,11 @@ Standard response envelope (see docs/README.md)
 - GET /rec/api/analytics/candidate-source?time_range=...
 
 ## Employee Search
+
 - GET /rec/api/employee-search?q=...&filters=...
 
 ## Documents
+
 - POST /rec/api/documents { ...meta }, file upload handled by service
 - GET /rec/api/documents/:id
 - PUT /rec/api/documents/:id { ...partial }
@@ -89,6 +96,7 @@ Standard response envelope (see docs/README.md)
 - DELETE /rec/api/documents/:id/associate?entity_type=...&entity_id=...
 
 ## Onboarding
+
 - GET /rec/api/onboarding
 - GET /rec/api/onboarding/:id
 - POST /rec/api/onboarding/offer/:offerId { ... }
@@ -105,6 +113,7 @@ Standard response envelope (see docs/README.md)
 - DELETE /rec/api/onboarding/tasks/:taskId
 
 ## Public (no auth)
+
 - GET /rec/api/public/requisitions
 - GET /rec/api/public/requisitions/:id
 - POST /rec/api/public/applications { requisition_id, candidate: { ... }, attachments?: [] }

@@ -13,11 +13,9 @@ export const baseResponseSchema = z.object({
     timestamp: z.string().regex(patterns.date),
     requestId: z.string().regex(patterns.uuid),
     data: z.unknown(),
-    metadata: z.record(z.unknown())
-        .refine(
-            (data) => Object.keys(data).length <= 50,
-            'Maximum 50 metadata entries allowed'
-        )
+    metadata: z
+        .record(z.unknown())
+        .refine((data) => Object.keys(data).length <= 50, 'Maximum 50 metadata entries allowed')
         .optional(),
 });
 
@@ -32,11 +30,9 @@ export const errorResponseSchema = z.object({
         details: z.unknown().optional(),
         stack: z.string().optional(),
     }),
-    metadata: z.record(z.unknown())
-        .refine(
-            (data) => Object.keys(data).length <= 50,
-            'Maximum 50 metadata entries allowed'
-        )
+    metadata: z
+        .record(z.unknown())
+        .refine((data) => Object.keys(data).length <= 50, 'Maximum 50 metadata entries allowed')
         .optional(),
 });
 
@@ -64,13 +60,13 @@ export const validateResponse = (data: unknown, schema: z.ZodType) => {
         return schema.parse(data);
     } catch (error) {
         if (error instanceof z.ZodError) {
-            const formattedErrors = error.errors.map(err => ({
+            const formattedErrors = error.errors.map((err) => ({
                 path: err.path.join('.'),
                 message: err.message,
-                code: err.code
+                code: err.code,
             }));
             throw new Error(`Response validation failed: ${JSON.stringify(formattedErrors)}`);
         }
         throw error;
     }
-}; 
+};

@@ -57,15 +57,17 @@ export const userSchema = baseUserSchema.extend({
     lastLoginAt: z.string().regex(patterns.date, messages.invalidDate).optional(),
     departmentId: z.string().regex(patterns.uuid).optional(),
     managerId: z.string().regex(patterns.uuid).optional().nullable(),
-    preferences: z.object({
-        language: z.string().min(2).max(5),
-        timezone: z.string(),
-        notifications: z.object({
-            email: z.boolean(),
-            push: z.boolean(),
-            sms: z.boolean(),
-        }),
-    }).optional(),
+    preferences: z
+        .object({
+            language: z.string().min(2).max(5),
+            timezone: z.string(),
+            notifications: z.object({
+                email: z.boolean(),
+                push: z.boolean(),
+                sms: z.boolean(),
+            }),
+        })
+        .optional(),
 });
 
 // User creation schema
@@ -83,11 +85,9 @@ export const updateUserSchema = createUserSchema.partial();
 export const userResponseSchema = z.object({
     success: z.boolean(),
     data: userSchema,
-    metadata: z.record(z.unknown())
-        .refine(
-            (data) => Object.keys(data).length <= 50,
-            'Maximum 50 metadata entries allowed'
-        )
+    metadata: z
+        .record(z.unknown())
+        .refine((data) => Object.keys(data).length <= 50, 'Maximum 50 metadata entries allowed')
         .optional(),
 });
 
@@ -97,7 +97,7 @@ export const validateUser = (data: unknown, schema: z.ZodType) => {
         return schema.parse(data);
     } catch (error) {
         if (error instanceof z.ZodError) {
-            const formattedErrors = error.errors.map(err => ({
+            const formattedErrors = error.errors.map((err) => ({
                 path: err.path.join('.'),
                 message: err.message,
                 code: err.code,
@@ -106,4 +106,4 @@ export const validateUser = (data: unknown, schema: z.ZodType) => {
         }
         throw error;
     }
-}; 
+};

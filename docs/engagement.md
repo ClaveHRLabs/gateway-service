@@ -6,6 +6,7 @@ Auth: Bearer token required.
 Standard response envelope (see docs/README.md)
 
 ## Recognitions
+
 - POST /eng/api/recognitions { ...recognition }
 - GET /eng/api/recognitions
 - GET /eng/api/recognitions/:id
@@ -22,6 +23,7 @@ Standard response envelope (see docs/README.md)
 - GET /eng/api/recognitions/metrics
 
 ## Wellness
+
 - GET /eng/api/wellness
 - POST /eng/api/wellness { ...program }
 - GET /eng/api/wellness/active
@@ -42,6 +44,7 @@ Standard response envelope (see docs/README.md)
 - GET /eng/api/wellness/progress
 
 ## Events
+
 - GET /eng/api/events
 - POST /eng/api/events { ...event }
 - GET /eng/api/events/upcoming
@@ -59,6 +62,7 @@ Standard response envelope (see docs/README.md)
 - GET /eng/api/events/me
 
 ## Suggestions
+
 - GET /eng/api/suggestions
 - POST /eng/api/suggestions { ...suggestion }
 - GET /eng/api/suggestions/trending
@@ -76,6 +80,7 @@ Standard response envelope (see docs/README.md)
 - DELETE /eng/api/suggestions/responses/:responseId
 
 ## Metrics
+
 - GET /eng/api/metrics
 - POST /eng/api/metrics { name, value, timestamp? }
 - GET /eng/api/metrics/dashboard
@@ -86,6 +91,7 @@ Standard response envelope (see docs/README.md)
 - DELETE /eng/api/metrics
 
 ## Retention
+
 - GET /eng/api/retention
 - GET /eng/api/retention/factors
 - GET /eng/api/retention/distribution
@@ -94,6 +100,7 @@ Standard response envelope (see docs/README.md)
 - DELETE /eng/api/retention/:employeeId
 
 ## Dashboards
+
 - GET /eng/api/dashboards
 - POST /eng/api/dashboards { ...dashboard }
 - GET /eng/api/dashboards/default

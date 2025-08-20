@@ -1,95 +1,78 @@
+
 import { ServiceConfig } from '../types/request';
-import { logger } from '../utils/logger';
+import { RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX } from '../utils/constants';
+import { getConfig } from './appConfig';
 
-// Get service URLs directly from environment variables to avoid circular dependencies
-const getServiceUrl = (envVarName: string, defaultValue: string): string => {
-    return process.env[envVarName] || defaultValue;
-};
+// Shared constants
+const METHODS = Object.freeze(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const);
+const DEFAULT_RATE_LIMIT = Object.freeze({ windowMs: RATE_LIMIT_WINDOW_MS, max: RATE_LIMIT_MAX });
 
-// Validate service configuration
-const validateServiceConfig = (service: ServiceConfig): void => {
-    if (!service.url) {
-        throw new Error(`Service URL not configured for ${service.name}`);
+// Cache for initialized services
+let servicesInitialized = false;
+let servicesCache: ReadonlyArray<ServiceConfig> = [];
+let serviceMapCache = new Map<string, ServiceConfig>();
+
+// Initialize services configuration
+async function initializeServices() {
+    if (servicesInitialized) return;
+
+    const Config = await getConfig();
+
+    // Helper to read URL from validated config, fallback to schema defaults already applied
+    const url = (key: keyof typeof Config, fallback?: string) => (Config as any)[key] || fallback || '';
+
+    // Raw candidate definitions (no mutation later)
+    const CANDIDATES: ReadonlyArray<ServiceConfig> = Object.freeze([
+        { name: 'id-service', url: url('IDENTITY_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
+        { name: 'emp-service', url: url('EMPLOYEE_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
+        { name: 'rec-service', url: url('RECRUITMENT_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
+        { name: 'eng-service', url: url('ENGAGEMENT_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
+        { name: 'perf-service', url: url('PERFORMANCE_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
+        { name: 'nt-service', url: url('NOTIFICATION_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
+    ]);
+
+    // Validate and build an indexed map for O(1) lookups
+    const serviceMap = new Map<string, ServiceConfig>();
+    for (const svc of CANDIDATES) {
+        if (!svc.url) {
+            console.error('Service URL missing', { service: svc.name, scope: 'servicesConfig' });
+            continue; // Skip invalid entry instead of throwing to keep gateway up
+        }
+        if (!svc.methods?.length) {
+            console.error('Service methods missing', { service: svc.name, scope: 'servicesConfig' });
+            continue;
+        }
+        serviceMap.set(svc.name, Object.freeze({ ...svc }));
     }
-    if (!service.methods || service.methods.length === 0) {
-        throw new Error(`Service methods not configured for ${service.name}`);
-    }
-};
 
-// Service configuration with validation
-export const services: ServiceConfig[] = [
-    {
-        name: 'id-service',
-        url: getServiceUrl('IDENTITY_SERVICE_URL', 'http://localhost:5002'),
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        rateLimit: {
-            windowMs: 15 * 60 * 1000,
-            max: 100,
-        },
-    },
-    {
-        name: 'emp-service',
-        url: getServiceUrl('EMPLOYEE_SERVICE_URL', 'http://localhost:5003'),
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        rateLimit: {
-            windowMs: 15 * 60 * 1000, // 15 minutes
-            max: 100, // limit each IP to 100 requests per windowMs
-        },
-    },
-    {
-        name: 'rec-service',
-        url: getServiceUrl('RECRUITMENT_SERVICE_URL', 'http://localhost:5004'),
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        rateLimit: {
-            windowMs: 15 * 60 * 1000,
-            max: 100,
-        },
-    },
-    {
-        name: 'eng-service',
-        url: getServiceUrl('ENGAGEMENT_SERVICE_URL', 'http://localhost:5005'),
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        rateLimit: {
-            windowMs: 15 * 60 * 1000,
-            max: 100,
-        },
-    },
-    {
-        name: 'perf-service',
-        url: getServiceUrl('PERFORMANCE_SERVICE_URL', 'http://localhost:5006'),
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        rateLimit: {
-            windowMs: 15 * 60 * 1000,
-            max: 100,
-        },
-    },
-    {
-        name: 'nt-service',
-        url: getServiceUrl('NOTIFICATION_SERVICE_URL', 'http://localhost:5010'),
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        rateLimit: {
-            windowMs: 15 * 60 * 1000,
-            max: 100,
-        },
-    },
-    
-    // Add other services as needed
-].map(service => {
-    try {
-        validateServiceConfig(service);
-        return service;
-    } catch (error) {
-        logger.error(`Service configuration error for ${service.name}:`, error);
-        throw error;
+    // Cache the results
+    serviceMapCache = serviceMap;
+    servicesCache = Object.freeze(Array.from(serviceMap.values()));
+    servicesInitialized = true;
+}
+
+// Export async getter functions
+export async function getServices(): Promise<ReadonlyArray<ServiceConfig>> {
+    await initializeServices();
+    return servicesCache;
+}
+
+export async function isServiceConfigured(serviceName: string): Promise<boolean> {
+    await initializeServices();
+    return serviceMapCache.has(serviceName);
+}
+
+export async function getServiceConfig(serviceName: string): Promise<ServiceConfig | undefined> {
+    await initializeServices();
+    return serviceMapCache.get(serviceName);
+}
+
+// For backward compatibility, export synchronous versions that throw if not initialized
+export const services: ReadonlyArray<ServiceConfig> = new Proxy([] as any, {
+    get(target, prop) {
+        if (!servicesInitialized) {
+            throw new Error('Services not initialized. Use getServices() instead.');
+        }
+        return servicesCache[prop as any];
     }
 });
-
-// Helper function to check if a service is configured
-export const isServiceConfigured = (serviceName: string): boolean => {
-    return services.some(service => service.name === serviceName);
-};
-
-// Helper function to get service configuration
-export const getServiceConfig = (serviceName: string): ServiceConfig | undefined => {
-    return services.find(service => service.name === serviceName);
-}; 

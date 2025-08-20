@@ -6,6 +6,7 @@ Auth: Bearer token required.
 Standard response envelope (see docs/README.md)
 
 ## Templates
+
 - POST /nt/api/templates { name, channel: 'email'|'sms'|'whatsapp'|'telegram', subject?, body, variables?: string[] }
 - GET /nt/api/templates/:id
 - GET /nt/api/templates/organization/:organizationId
@@ -13,6 +14,7 @@ Standard response envelope (see docs/README.md)
 - DELETE /nt/api/templates/:id
 
 ## Notifications
+
 - POST /nt/api/notifications { templateId?, channel?, to: string|object, subject?, body?, variables?: object, attachments?: [] }
 - GET /nt/api/notifications/:id
 - GET /nt/api/notifications/:id/logs

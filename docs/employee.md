@@ -6,43 +6,45 @@ Auth: Bearer token required.
 See docs/README.md for the standard response envelope.
 
 ## Employees
+
 - POST /emp/api/employees
-  - body: CreateEmployee (see structure below)
-  - 201 data: Employee
+    - body: CreateEmployee (see structure below)
+    - 201 data: Employee
 - GET /emp/api/employees
-  - 200 data: Employee[] (with pagination via query if supported)
+    - 200 data: Employee[] (with pagination via query if supported)
 - GET /emp/api/employees/ids?ids=uuid,uuid
-  - 200 data: Employee[]
+    - 200 data: Employee[]
 - GET /emp/api/employees/total-employees
-  - 200 data: { total: number }
+    - 200 data: { total: number }
 - GET /emp/api/employees/hierarchy
-  - 200 data: TreeNode[]
+    - 200 data: TreeNode[]
 - GET /emp/api/employees/org-chart
-  - 200 data: OrgChartNode[]
+    - 200 data: OrgChartNode[]
 - GET /emp/api/employees/manager/:managerId
-  - params: { managerId: uuid }
-  - 200 data: Employee[]
+    - params: { managerId: uuid }
+    - 200 data: Employee[]
 - GET /emp/api/employees/user/:userId
-  - params: { userId: uuid }
-  - 200 data: Employee
+    - params: { userId: uuid }
+    - 200 data: Employee
 - GET /emp/api/employees/internal-id/:internalId
-  - params: { internalId: string }
-  - 200 data: Employee
+    - params: { internalId: string }
+    - 200 data: Employee
 - GET /emp/api/employees/:id
-  - params: { id: uuid }
-  - 200 data: Employee
+    - params: { id: uuid }
+    - 200 data: Employee
 - GET /emp/api/employees/:id/lite
-  - 200 data: EmployeeLite
+    - 200 data: EmployeeLite
 - GET /emp/api/employees/:id/full
-  - 200 data: EmployeeFull
+    - 200 data: EmployeeFull
 - PATCH /emp/api/employees/:id
-  - body: UpdateEmployee
-  - 200 data: Employee
+    - body: UpdateEmployee
+    - 200 data: Employee
 - DELETE /emp/api/employees/:id
-  - 200: { success: true }
+    - 200: { success: true }
 - CSV Upload: POST /emp/api/employees/upload/csv (Content-Type: text/csv)
 
 CreateEmployee (key sections)
+
 - userId?: uuid
 - status: 'active'|'onboarding'|'offboarding'|'terminated'|'on_leave'
 - personalInfo: { firstName: string, middleName?: string, lastName: string, preferredName?: string, pronouns?: string, photo?: string }
@@ -57,6 +59,7 @@ CreateEmployee (key sections)
 UpdateEmployee: Partial<CreateEmployee>
 
 ## Time & Leave
+
 - GET /emp/api/time/holidays
 - GET /emp/api/time/holidays/by-country?year=YYYY&country=ISO3
 - POST /emp/api/time/holidays { name, date, country_code, is_recurring? }
@@ -93,6 +96,7 @@ UpdateEmployee: Partial<CreateEmployee>
 - GET /emp/api/time/working-days
 
 ## Goals & OKRs
+
 - POST /emp/api/goals { title, description?, scope, timeFrame, startDate, dueDate, priority, category, ownerId?, departmentId?, visibility, metrics?, alignWith?, contributors?, visibilityEntities? }
 - GET /emp/api/goals
 - GET /emp/api/goals/:id

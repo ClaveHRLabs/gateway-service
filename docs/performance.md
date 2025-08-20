@@ -6,6 +6,7 @@ Auth: Bearer token required.
 Standard response envelope (see docs/README.md)
 
 ## Review Templates
+
 - GET /perf/api/review-templates
 - GET /perf/api/review-templates/:id
 - POST /perf/api/review-templates { name, description?, sections: [...] }
@@ -17,6 +18,7 @@ Standard response envelope (see docs/README.md)
 - DELETE /perf/api/review-templates/:templateId/questions/:questionId
 
 ## Review Cycles
+
 - GET /perf/api/review-cycles
 - GET /perf/api/review-cycles/active
 - GET /perf/api/review-cycles/:id
@@ -29,6 +31,7 @@ Standard response envelope (see docs/README.md)
 - PUT /perf/api/review-cycles/:id/statistics { ... }
 
 ## Reviews
+
 - GET /perf/api/reviews
 - GET /perf/api/reviews/employee/:employeeId
 - GET /perf/api/reviews/manager/:managerId
@@ -41,6 +44,7 @@ Standard response envelope (see docs/README.md)
 - POST /perf/api/reviews/:id/acknowledge
 
 ## Development Plans
+
 - GET /perf/api/development-plans
 - GET /perf/api/development-plans/employee/:employeeId
 - GET /perf/api/development-plans/review/:reviewId

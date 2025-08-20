@@ -1,12 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, HttpStatusCode } from '@vspl/core';
 import { validateRequestHeaders } from '../models/request';
-import { logger } from '../utils/logger';
 
-export const requestValidationMiddleware = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const requestValidationMiddleware = (req: Request, res: Response, next: NextFunction) => {
     try {
         // Convert headers to lowercase for case-insensitive matching
         const headers = Object.entries(req.headers).reduce(
@@ -14,20 +9,22 @@ export const requestValidationMiddleware = (
                 ...acc,
                 [key.toLowerCase()]: value,
             }),
-            {}
+            {},
         );
 
         // Validate headers
         validateRequestHeaders(headers as Record<string, string>);
         next();
     } catch (error) {
-        logger.error('Request validation error:', error);
+        console.error(error instanceof Error ? error : 'Request validation error', {
+            scope: 'requestValidation',
+        });
         if (error instanceof Error) {
-            return res.status(400).json({
+            return res.status(HttpStatusCode.BAD_REQUEST).json({
                 error: 'Invalid request headers',
                 details: error.message,
             });
         }
-        return res.status(400).json({ error: 'Invalid request headers' });
+        return res.status(HttpStatusCode.BAD_REQUEST).json({ error: 'Invalid request headers' });
     }
-}; 
+};

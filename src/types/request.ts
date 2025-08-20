@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import { Request } from '@vspl/core';
 import { z } from 'zod';
 import { baseUserSchema } from '../models/user';
 
@@ -29,4 +29,4 @@ export interface ServiceConfig {
         windowMs: number;
         max: number;
     };
-} 
+}
