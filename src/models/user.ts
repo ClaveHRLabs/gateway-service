@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { UserRole as CoreUserRole } from '@vspl/core';
 
 // Common validation patterns
 const patterns = {
@@ -37,9 +38,10 @@ export const baseUserSchema = z.object({
     employeeId: z.string().regex(patterns.uuid).optional(),
 });
 
-// User roles
-export const UserRole = z.enum(['admin', 'manager', 'employee', 'guest']);
-export type UserRole = z.infer<typeof UserRole>;
+// User roles: align with shared core roles (keep legacy values for backward compatibility if tokens still carry them)
+// We map any legacy short roles to canonical core roles at the edge (middleware) if needed.
+export const UserRole = z.nativeEnum(CoreUserRole);
+export type UserRole = CoreUserRole;
 
 // User status
 export const UserStatus = z.enum(['active', 'inactive', 'suspended', 'pending']);
@@ -47,8 +49,8 @@ export type UserStatus = z.infer<typeof UserStatus>;
 
 // Complete user schema
 export const userSchema = baseUserSchema.extend({
-    role: z.string(),
-    roles: z.array(z.string()).optional(),
+    role: z.string(), // primary role (may be deprecated in favor of roles[])
+    roles: z.array(z.string()).optional(), // list of roles, expected to be values of CoreUserRole
     status: z.string(),
     organizationId: z.string().regex(patterns.uuid).optional().nullable(),
     type: z.enum(['access', 'refresh']),

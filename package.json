@@ -6,16 +6,19 @@
     "scripts": {
         "build": "npm run lint && tsc",
         "start": "node dist/app.js",
+        "clean": "rm -rf dist && rm -rf node_modules",
         "dev": "nodemon",
         "test": "jest",
         "lint": "eslint src",
         "format": "prettier --write \"**/*.{js,ts,tsx,json,md,css,scss,yml,yaml,html,mdx}\" --ignore-path .prettierignore"
     },
     "dependencies": {
-        "@vspl/core": "0.1.8",
+        "@vspl/core": "file:../libs/lib-core",
         "express-http-proxy": "^1.6.3",
+        "axios": "^1.11.0",
         "jsonwebtoken": "^9.0.2",
-        "uuid": "^9.0.1"
+        "uuid": "^9.0.1",
+        "zod": "^3.23.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.33.0",

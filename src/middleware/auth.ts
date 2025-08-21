@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, HttpStatusCode } from '@vspl/core';
+import { Request, Response, NextFunction, HttpStatusCode, logger } from '@vspl/core';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from '../types/request';
 import { validateUser, userSchema } from '../models/user';
@@ -15,17 +15,16 @@ export const createAuthMiddleware = (config: GatewayConfig) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             // Extract service identifier from the URL path
-            const pathParts = req.originalUrl.split('/');
-            const servicePrefix = pathParts[1] || '';
-
+            const servicePrefix = req.originalUrl.split('/')[1];
+    
             // Check if the path should bypass authentication for this service
             if (servicePrefix) {
-                const path = req.path;
+                const path = req.path.replace(`/${servicePrefix}`, ''); // remove the servicePrefix
+
+                logger.info(`Checking whitelist for ${path} in service: ${servicePrefix}`);
                 const whitelisted = await isWhitelisted(path, servicePrefix);
                 if (whitelisted) {
-                    console.log(
-                        `Bypassing authentication for whitelisted endpoint: ${servicePrefix}${path}`,
-                    );
+                    logger.info(`Bypassing authentication for whitelisted endpoint: ${servicePrefix}${path}`);
                     return next();
                 }
             }

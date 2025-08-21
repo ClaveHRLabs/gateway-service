@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, HttpStatusCode } from '@vspl/core';
+import { Request, Response, NextFunction, HttpStatusCode, CatchErrors } from '@vspl/core';
 import axios from 'axios';
 import proxy from 'express-http-proxy';
 import { OutgoingHttpHeaders } from 'http';
@@ -11,6 +11,7 @@ import {
     HEADER_REQUEST_ID,
     MEDIA_MULTIPART,
 } from '../utils/constants';
+import logger from '../utils/logger';
 
 // Type augmentation for headers to prevent TypeScript errors
 interface ExtendedHeaders extends OutgoingHttpHeaders {
@@ -27,9 +28,7 @@ export const createMultipartProxy = (serviceUrl: string) => {
         },
         proxyReqOptDecorator: function (proxyReqOpts, srcReq) {
             // We need to handle headers properly for TypeScript
-            if (!proxyReqOpts.headers) {
-                proxyReqOpts.headers = {};
-            }
+            proxyReqOpts.headers ??= {};
 
             // Cast headers to our extended type
             const headers = proxyReqOpts.headers as ExtendedHeaders;
@@ -82,221 +81,240 @@ export const createMultipartProxy = (serviceUrl: string) => {
  * Generic proxy middleware that handles routing to any service
  */
 class GatewayProxy {
+    private now() {
+        return new Date().toISOString();
+    }
+
+    private buildError(
+        code: string | number,
+        message: string,
+        requestId?: string,
+        details?: string,
+    ) {
+        return {
+            success: false,
+            timestamp: this.now(),
+            requestId,
+            error: { code, message, ...(details ? { details } : {}) },
+        };
+    }
+
+    private extractServiceName(req: Request) {
+        const servicePrefix = (req.originalUrl.split('/')[1] || '').trim();
+        return {
+            servicePrefix,
+            serviceName: `${servicePrefix}-service`,
+        };
+    }
+
+    private methodNotAllowed(
+        res: Response,
+        req: Request,
+        requestId?: string,
+        serviceName?: string,
+        allowed?: string[],
+    ) {
+        return res.status(HttpStatusCode.METHOD_NOT_ALLOWED).json(
+            this.buildError(
+                ERROR_METHOD_NOT_ALLOWED,
+                `Method ${req.method} not allowed for ${serviceName}`,
+                requestId,
+                allowed ? `Allowed methods: ${allowed.join(', ')}` : undefined,
+            ),
+        );
+    }
+
+    private buildBaseHeaders(req: Request, requestId?: string) {
+        const headers: Record<string, string> = {};
+        headers['Content-Type'] =
+            (req.headers['content-type'] as string) || DEFAULT_CONTENT_TYPE;
+        if (requestId) headers[HEADER_REQUEST_ID] = requestId;
+        return headers;
+    }
+
+    private applyIdentityHeaders(
+        req: Request,
+        headers: Record<string, string>,
+        isIdentityService: boolean,
+    ) {
+        if (!isIdentityService) return;
+        if (req.headers.authorization)
+            headers['Authorization'] = req.headers.authorization;
+        if (req.headers['x-setup-code'])
+            headers['x-setup-code'] = req.headers['x-setup-code'] as string;
+    }
+
+    private applyGenericForwardHeaders(
+        req: Request,
+        headers: Record<string, string>,
+        isIdentityService: boolean,
+    ) {
+        if (!isIdentityService || !req.headers['x-setup-code']) {
+            ['x-api-key'].forEach((h) => {
+                if (req.headers[h]) headers[h] = req.headers[h] as string;
+            });
+        }
+    }
+
+    private applyUserHeaders(
+        headers: Record<string, string>,
+        authenticatedReq: AuthenticatedRequest,
+        isIdentityService: boolean,
+    ) {
+        const user = authenticatedReq.user;
+        if (!user || isIdentityService) return;
+
+        const simpleMap: Record<string, string | undefined> = {
+            'x-user-id': user.id,
+            'x-user-email': user.email,
+            'x-user-roles': user.roles?.join(','),
+            'x-organization-id': user.organizationId,
+            'x-employee-id': user.employeeId,
+            'x-user-first-name': user.firstName,
+            'x-user-last-name': user.lastName,
+            'x-user-department': user.department,
+            'x-user-position': user.position,
+            'x-user-permissions': user.permissions?.join(','),
+            'x-tenant-id': user.tenantId,
+            'x-user-locale': user.locale,
+            'x-user-timezone': user.timezone,
+            'x-user-last-login': user.lastLogin,
+            'x-user-is-active':
+                user.isActive !== undefined ? String(user.isActive) : undefined,
+        };
+        Object.entries(simpleMap).forEach(
+            ([k, v]) => v !== undefined && (headers[k] = v),
+        );
+
+        if (user.metadata) {
+            headers['x-user-metadata'] = JSON.stringify(user.metadata);
+        }
+    }
+
+    @CatchErrors({rethrow: false})
+    public async forwardRequest(
+        method: string,
+        url: string,
+        req: Request,
+        headers: Record<string, string>,
+    ) {
+        try {
+            switch (method) {
+                case 'GET':
+                    return axios.get(url, { headers, params: req.query });
+                case 'POST': {
+                    if (req.headers['content-type']?.includes(MEDIA_MULTIPART)) {
+                        return axios.post(url, req, {
+                            headers,
+                            maxBodyLength: Infinity,
+                            maxContentLength: Infinity,
+                            transformRequest: [(d) => d],
+                        });
+                    }
+                    return axios.post(url, req.body, { headers });
+                }
+                case 'PUT':
+                    return axios.put(url, req.body, { headers });
+                case 'PATCH':
+                    return axios.patch(url, req.body, { headers });
+                case 'DELETE':
+                    return axios.delete(url, { headers, data: req.body });
+                default:
+                    return null;
+            }
+        } catch (error) {
+            logger.error(`Error forwarding request to ${url}`, { error });
+            return null;
+        }
+    }
+
+    private handleMultipartDirect(
+        req: AuthenticatedRequest,
+        res: Response,
+        next: NextFunction,
+        serviceUrl: string,
+    ) {
+        if (!req.user) return;
+        req.headers['x-user-id'] = req.user.id;
+        req.headers['x-user-email'] = req.user.email;
+        req.headers['x-user-roles'] = req.user.roles.join(',');
+        if (req.user.organizationId)
+            req.headers['x-organization-id'] = req.user.organizationId;
+        if (req.user.employeeId) req.headers['x-employee-id'] = req.user.employeeId;
+
+        const handler = createMultipartProxy(serviceUrl);
+        handler(req as any, res as any, next);
+    }
+
     async handle(req: Request, res: Response, next: NextFunction) {
         const authenticatedReq = req as AuthenticatedRequest;
+        const { servicePrefix, serviceName } = this.extractServiceName(req);
 
-        // Extract service identifier from the URL path
-        const pathParts = req.originalUrl.split('/');
-        const servicePrefix = pathParts[1] || '';
-        const serviceName = `${servicePrefix}-service`;
-
-        // Get service configuration
         const serviceConfig = await getServiceConfig(serviceName);
         if (!serviceConfig) {
-            return res.status(HttpStatusCode.SERVICE_UNAVAILABLE).json({
-                success: false,
-                timestamp: new Date().toISOString(),
-                requestId: authenticatedReq.requestId,
-                error: {
-                    code: ERROR_SERVICE_NOT_CONFIGURED,
-                    message: `Service ${serviceName} is not configured`,
-                    details: 'Please check the service configuration and try again later',
-                },
-            });
+            return res
+                .status(HttpStatusCode.SERVICE_UNAVAILABLE)
+                .json(
+                    this.buildError(
+                        ERROR_SERVICE_NOT_CONFIGURED,
+                        `Service ${serviceName} is not configured`,
+                        authenticatedReq.requestId,
+                        'Please check the service configuration and try again later',
+                    ),
+                );
         }
 
-        // Check if the HTTP method is allowed for this service
         if (!serviceConfig.methods.includes(req.method)) {
-            return res.status(HttpStatusCode.METHOD_NOT_ALLOWED).json({
-                success: false,
-                timestamp: new Date().toISOString(),
-                requestId: authenticatedReq.requestId,
-                error: {
-                    code: ERROR_METHOD_NOT_ALLOWED,
-                    message: `Method ${req.method} not allowed for ${serviceName}`,
-                    details: `Allowed methods: ${serviceConfig.methods.join(', ')}`,
-                },
-            });
+            return this.methodNotAllowed(
+                res,
+                req,
+                authenticatedReq.requestId,
+                serviceName,
+                serviceConfig.methods,
+            );
         }
 
-        // Special handling for multipart/form-data requests
+        // Multipart early path
         if (req.headers['content-type']?.includes(MEDIA_MULTIPART)) {
-            console.log(
-                `Using direct proxy for multipart/form-data request to ${serviceConfig.url}`,
+            this.handleMultipartDirect(
+                authenticatedReq,
+                res,
+                next,
+                serviceConfig.url,
             );
-
-            // Add user headers to the request before proxying
-            if (authenticatedReq.user) {
-                req.headers['x-user-id'] = authenticatedReq.user.id;
-                req.headers['x-user-email'] = authenticatedReq.user.email;
-                req.headers['x-user-roles'] = authenticatedReq.user.roles.join(',');
-
-                if (authenticatedReq.user.organizationId) {
-                    req.headers['x-organization-id'] = authenticatedReq.user.organizationId;
-                }
-
-                if (authenticatedReq.user.employeeId) {
-                    req.headers['x-employee-id'] = authenticatedReq.user.employeeId;
-                }
-            }
-
-            // Use the specialized proxy for multipart requests
-            // Use double type assertion to resolve typescript issue
-            const handler = createMultipartProxy(serviceConfig.url);
-            handler(req as any, res as any, next);
             return;
         }
 
-        // Prepare headers
-        const headers: Record<string, string> = {};
-
-        // Preserve original Content-Type header
-        if (req.headers['content-type']) {
-            headers['Content-Type'] = req.headers['content-type'] as string;
-        } else {
-            headers['Content-Type'] = DEFAULT_CONTENT_TYPE;
-        }
-
-        // Forward request ID for idempotency
-        headers[HEADER_REQUEST_ID] = authenticatedReq.requestId || '';
-
         const isIdentityService = servicePrefix === 'id';
+        if (!isIdentityService) delete req.headers.authorization;
 
-        // Forward auth and setup headers for identity service
-        if (isIdentityService) {
-            // if path contains /api/organizations/ send the request to the setup service
-            // Always forward Authorization header to identity service
-            if (req.headers.authorization) {
-                headers['Authorization'] = req.headers.authorization as string;
-            }
+        const headers = this.buildBaseHeaders(req, authenticatedReq.requestId);
+        this.applyIdentityHeaders(req, headers, isIdentityService);
+        this.applyGenericForwardHeaders(req, headers, isIdentityService);
+        this.applyUserHeaders(headers, authenticatedReq, isIdentityService);
 
-            // Always forward X-Setup-Code header to identity service, especially for org APIs
-            if (req.headers['x-setup-code']) {
-                headers['x-setup-code'] = req.headers['x-setup-code'] as string;
-            }
-        } else {
-            // For non-identity services, remove auth header and add user claims
-            delete req.headers.authorization;
-        }
-
-        // Forward other special headers used by all services (except setup-code which is handled above for identity)
-        if (!isIdentityService || !req.headers['x-setup-code']) {
-            ['x-api-key'].forEach((header) => {
-                if (req.headers[header]) {
-                    headers[header] = req.headers[header] as string;
-                }
-            });
-        }
-
-        // For non-identity services, forward user claims if available
-        if (authenticatedReq.user && !isIdentityService) {
-            // Basic user information
-            headers['x-user-id'] = authenticatedReq.user.id;
-            headers['x-user-email'] = authenticatedReq.user.email;
-            headers['x-user-roles'] = authenticatedReq.user.roles.join(',');
-            if (authenticatedReq.user.organizationId) {
-                headers['x-organization-id'] = authenticatedReq.user.organizationId;
-            }
-
-            // Forward employee ID if available
-            if (authenticatedReq.user.employeeId) {
-                headers['x-employee-id'] = authenticatedReq.user.employeeId;
-            }
-
-            // Additional user claims
-            if (authenticatedReq.user.firstName)
-                headers['x-user-first-name'] = authenticatedReq.user.firstName;
-            if (authenticatedReq.user.lastName)
-                headers['x-user-last-name'] = authenticatedReq.user.lastName;
-            if (authenticatedReq.user.department)
-                headers['x-user-department'] = authenticatedReq.user.department;
-            if (authenticatedReq.user.position)
-                headers['x-user-position'] = authenticatedReq.user.position;
-            if (authenticatedReq.user.permissions)
-                headers['x-user-permissions'] = authenticatedReq.user.permissions.join(',');
-            if (authenticatedReq.user.tenantId)
-                headers['x-tenant-id'] = authenticatedReq.user.tenantId;
-            if (authenticatedReq.user.locale)
-                headers['x-user-locale'] = authenticatedReq.user.locale;
-            if (authenticatedReq.user.timezone)
-                headers['x-user-timezone'] = authenticatedReq.user.timezone;
-            if (authenticatedReq.user.lastLogin)
-                headers['x-user-last-login'] = authenticatedReq.user.lastLogin;
-            if (authenticatedReq.user.isActive !== undefined)
-                headers['x-user-is-active'] = String(authenticatedReq.user.isActive);
-
-            // Forward metadata as JSON if present
-            if (authenticatedReq.user.metadata) {
-                headers['x-user-metadata'] = JSON.stringify(authenticatedReq.user.metadata);
-            }
-        }
-
-        // Construct target URL
-        const path = req.path;
-        const targetUrl = `${serviceConfig.url}${path}`;
-        const method = req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-
-        // Execute the request based on the method
+        const targetUrl = `${serviceConfig.url}${req.path}`;
         let response;
-        switch (method) {
-            case 'GET':
-                response = await axios.get(targetUrl, {
-                    headers,
-                    params: req.query,
-                });
-                break;
-            case 'POST':
-                // For multipart/form-data requests, we need special handling
-                if (req.headers['content-type']?.includes(MEDIA_MULTIPART)) {
-                    console.log(`Forwarding multipart/form-data request to ${targetUrl}`);
+        response = await this.forwardRequest(
+            req.method,
+            targetUrl,
+            req,
+            headers,
+        );
 
-                    // Create a pass-through proxy request
-                    // We don't try to parse or modify the multipart data, just pass it through
-                    response = await axios.post(targetUrl, req, {
-                        headers,
-                        maxBodyLength: Infinity,
-                        maxContentLength: Infinity,
-                        transformRequest: [
-                            (data) => {
-                                // Return the raw request data
-                                return data;
-                            },
-                        ],
-                    });
-                } else {
-                    // For regular JSON requests
-                    response = await axios.post(targetUrl, req.body, { headers });
-                }
-                break;
-            case 'PUT':
-                response = await axios.put(targetUrl, req.body, { headers });
-                break;
-            case 'PATCH':
-                response = await axios.patch(targetUrl, req.body, { headers });
-                break;
-            case 'DELETE':
-                response = await axios.delete(targetUrl, {
-                    headers,
-                    data: req.body,
-                });
-                break;
-            default:
-                // Handle other methods
-                return res.status(HttpStatusCode.METHOD_NOT_ALLOWED).json({
-                    success: false,
-                    timestamp: new Date().toISOString(),
-                    requestId: authenticatedReq.requestId,
-                    error: {
-                        code: ERROR_METHOD_NOT_ALLOWED,
-                        message: `Method ${method} not supported`,
-                    },
-                });
+        if (!response) {
+            return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                this.buildError(
+                    HttpStatusCode.INTERNAL_SERVER_ERROR,
+                    `Failed request at service ${serviceName}`,
+                    authenticatedReq.requestId,
+                ),
+            );
         }
-
-        // Return the response
+        
         return res.status(response.status).json({
             success: true,
-            timestamp: new Date().toISOString(),
+            timestamp: this.now(),
             requestId: authenticatedReq.requestId,
             data: response.data?.data || response.data,
         });

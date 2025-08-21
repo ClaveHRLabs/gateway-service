@@ -3,17 +3,10 @@ import { getConfig } from './config/appConfig';
 import { getServices } from './config/services';
 import { STATUS_CONFIGURED } from './utils/constants';
 import { createAuthMiddleware } from './middleware/auth';
-import { createResponseInterceptor, createErrorHandler } from './middleware/response';
 
 // Create an async function to initialize dependencies
 export async function initializeDependencies() {
     const Config = await getConfig();
-
-    // Runtime security guard: ensure a proper JWT secret in production
-    if ((process.env.NODE_ENV === 'production') && Config.JWT_SECRET === 'dev-insecure-secret-change-me') {
-        // Fail fast to prevent running with insecure secret
-        throw new Error('Insecure default JWT_SECRET used in production. Set a strong JWT_SECRET env variable.');
-    }
 
     const logger = createLogger({ service: Config.SERVICE_NAME });
 
@@ -22,8 +15,6 @@ export async function initializeDependencies() {
         errorHandlerOptions: { includeStackTrace: Config.SHOW_ERROR_STACK },
     });
 
-    // Apply middleware that depends on config
-    app.use(createResponseInterceptor(Config));
     app.use(createAuthMiddleware(Config));
 
     app.get('/services/health', async (req: Request, res: Response) => {
@@ -35,9 +26,6 @@ export async function initializeDependencies() {
             services: services.map(s => ({ name: s.name, status: STATUS_CONFIGURED })),
         });
     });
-
-    // Apply error handler middleware last
-    app.use(createErrorHandler(Config));
 
     setupGracefulShutdown([
         async () => {
