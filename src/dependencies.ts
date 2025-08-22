@@ -1,4 +1,4 @@
-import { createApp, createLogger, setupGracefulShutdown, Request, Response, HttpStatusCode } from '@vspl/core';
+import { createApp, logger, setupGracefulShutdown, Request, Response, HttpStatusCode } from '@vspl/core';
 import { getConfig } from './config/appConfig';
 import { getServices } from './config/services';
 import { STATUS_CONFIGURED } from './utils/constants';
@@ -7,8 +7,6 @@ import { createAuthMiddleware } from './middleware/auth';
 // Create an async function to initialize dependencies
 export async function initializeDependencies() {
     const Config = await getConfig();
-
-    const logger = createLogger({ service: Config.SERVICE_NAME });
 
     const app = createApp({
         name: Config.SERVICE_NAME,

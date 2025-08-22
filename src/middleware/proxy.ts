@@ -11,7 +11,7 @@ import {
     HEADER_REQUEST_ID,
     MEDIA_MULTIPART,
 } from '../utils/constants';
-import logger from '../utils/logger';
+import { logger } from '@vspl/core';
 
 // Type augmentation for headers to prevent TypeScript errors
 interface ExtendedHeaders extends OutgoingHttpHeaders {
@@ -294,8 +294,7 @@ class GatewayProxy {
         this.applyUserHeaders(headers, authenticatedReq, isIdentityService);
 
         const targetUrl = `${serviceConfig.url}${req.path}`;
-        let response;
-        response = await this.forwardRequest(
+        const response = await this.forwardRequest(
             req.method,
             targetUrl,
             req,

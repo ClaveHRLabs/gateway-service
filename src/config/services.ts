@@ -1,4 +1,3 @@
-
 import { ServiceConfig } from '../types/request';
 import { RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX } from '../utils/constants';
 import { getConfig } from './appConfig';
@@ -19,16 +18,47 @@ async function initializeServices() {
     const Config = await getConfig();
 
     // Helper to read URL from validated config, fallback to schema defaults already applied
-    const url = (key: keyof typeof Config, fallback?: string) => (Config as any)[key] || fallback || '';
+    const url = (key: keyof typeof Config, fallback?: string) =>
+        (Config as any)[key] || fallback || '';
 
     // Raw candidate definitions (no mutation later)
     const CANDIDATES: ReadonlyArray<ServiceConfig> = Object.freeze([
-        { name: 'id-service', url: url('IDENTITY_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
-        { name: 'emp-service', url: url('EMPLOYEE_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
-        { name: 'rec-service', url: url('RECRUITMENT_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
-        { name: 'eng-service', url: url('ENGAGEMENT_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
-        { name: 'perf-service', url: url('PERFORMANCE_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
-        { name: 'nt-service', url: url('NOTIFICATION_SERVICE_URL'), methods: [...METHODS], rateLimit: DEFAULT_RATE_LIMIT },
+        {
+            name: 'id-service',
+            url: url('IDENTITY_SERVICE_URL'),
+            methods: [...METHODS],
+            rateLimit: DEFAULT_RATE_LIMIT,
+        },
+        {
+            name: 'emp-service',
+            url: url('EMPLOYEE_SERVICE_URL'),
+            methods: [...METHODS],
+            rateLimit: DEFAULT_RATE_LIMIT,
+        },
+        {
+            name: 'rec-service',
+            url: url('RECRUITMENT_SERVICE_URL'),
+            methods: [...METHODS],
+            rateLimit: DEFAULT_RATE_LIMIT,
+        },
+        {
+            name: 'eng-service',
+            url: url('ENGAGEMENT_SERVICE_URL'),
+            methods: [...METHODS],
+            rateLimit: DEFAULT_RATE_LIMIT,
+        },
+        {
+            name: 'perf-service',
+            url: url('PERFORMANCE_SERVICE_URL'),
+            methods: [...METHODS],
+            rateLimit: DEFAULT_RATE_LIMIT,
+        },
+        {
+            name: 'nt-service',
+            url: url('NOTIFICATION_SERVICE_URL'),
+            methods: [...METHODS],
+            rateLimit: DEFAULT_RATE_LIMIT,
+        },
     ]);
 
     // Validate and build an indexed map for O(1) lookups
@@ -39,7 +69,10 @@ async function initializeServices() {
             continue; // Skip invalid entry instead of throwing to keep gateway up
         }
         if (!svc.methods?.length) {
-            console.error('Service methods missing', { service: svc.name, scope: 'servicesConfig' });
+            console.error('Service methods missing', {
+                service: svc.name,
+                scope: 'servicesConfig',
+            });
             continue;
         }
         serviceMap.set(svc.name, Object.freeze({ ...svc }));
@@ -74,5 +107,5 @@ export const services: ReadonlyArray<ServiceConfig> = new Proxy([] as any, {
             throw new Error('Services not initialized. Use getServices() instead.');
         }
         return servicesCache[prop as any];
-    }
+    },
 });
