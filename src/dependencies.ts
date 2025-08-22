@@ -33,27 +33,3 @@ export async function initializeDependencies() {
 
     return { app, logger, Config };
 }
-
-// For backward compatibility - create a singleton pattern
-let globalDependencies: Awaited<ReturnType<typeof initializeDependencies>> | null = null;
-
-export async function getDependencies() {
-    globalDependencies ??= await initializeDependencies();
-    return globalDependencies;
-}
-
-// Export individual getters that throw if not initialized
-export async function getApp() {
-    const deps = await getDependencies();
-    return deps.app;
-}
-
-export async function getLogger() {
-    const deps = await getDependencies();
-    return deps.logger;
-}
-
-export async function getConfigSync() {
-    const deps = await getDependencies();
-    return deps.Config;
-}

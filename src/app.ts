@@ -1,5 +1,6 @@
 import { initializeDependencies } from './dependencies';
 import { proxyMiddleware } from './middleware/proxy';
+import { logger } from '@vspl/core';
 
 async function startServer() {
     try {
@@ -12,10 +13,10 @@ async function startServer() {
         // Start server using validated config
         const port = Config.PORT;
         app.listen(port, () => {
-            logger.info(`Gateway listening on ${port}`);
+            logger.debug(`${Config.SERVICE_NAME} running @ ${Config.HOST}:${port}`);
         });
     } catch (error) {
-        console.error('Failed to start server:', error);
+        logger.error('Failed to start server', { error });
         process.exit(1);
     }
 }
