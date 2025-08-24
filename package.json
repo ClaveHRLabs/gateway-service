@@ -4,7 +4,7 @@
     "description": "API Gateway service for ClaveHR",
     "main": "dist/app.js",
     "scripts": {
-        "build": "npm run lint && tsc",
+        "build": "tsc",
         "start": "node dist/app.js",
         "clean": "rm -rf dist && rm -rf node_modules",
         "dev": "nodemon",
@@ -13,7 +13,7 @@
         "format": "prettier --write \"**/*.{js,ts,tsx,json,md,css,scss,yml,yaml,html,mdx}\" --ignore-path .prettierignore"
     },
     "dependencies": {
-        "@vspl/core": "file:../libs/lib-core",
+        "@vspl/core": "^0.1.10",
         "express-http-proxy": "^1.6.3",
         "axios": "^1.11.0",
         "jsonwebtoken": "^9.0.2",

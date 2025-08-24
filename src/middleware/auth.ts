@@ -32,7 +32,6 @@ export const createAuthMiddleware = (config: GatewayConfig) => {
             // if header contains setup code send the request to the setup service
             const setupCode = req.headers['x-setup-code'];
             if (setupCode) {
-                console.log(`Setup code detected: ${setupCode}`);
                 return next();
             }
 
