@@ -191,7 +191,7 @@ class GatewayProxy {
         }
     }
 
-    @CatchErrors({rethrow: false})
+    @CatchErrors({ rethrow: false })
     public async forwardRequest(
         method: string,
         url: string,
@@ -310,7 +310,7 @@ class GatewayProxy {
                 ),
             );
         }
-        
+
         return res.status(response.status).json({
             success: true,
             timestamp: this.now(),
@@ -321,5 +321,10 @@ class GatewayProxy {
 }
 
 const gatewayProxy = new GatewayProxy();
-export const proxyMiddleware = (req: Request, res: Response, next: NextFunction) =>
-    gatewayProxy.handle(req, res, next);
+export const proxyMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await gatewayProxy.handle(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+};

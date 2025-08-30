@@ -1,4 +1,4 @@
-import { createApp, logger, setupGracefulShutdown, Request, Response, HttpStatusCode } from '@vspl/core';
+import { createApp, logger, setupGracefulShutdown, Request, Response, NextFunction, HttpStatusCode } from '@vspl/core';
 import { getConfig } from './config/appConfig';
 import { getServices } from './config/services';
 import { STATUS_CONFIGURED } from './utils/constants';
@@ -13,7 +13,14 @@ export async function initializeDependencies() {
         errorHandlerOptions: { includeStackTrace: Config.SHOW_ERROR_STACK },
     });
 
-    app.use(createAuthMiddleware(Config));
+    const authMiddleware = createAuthMiddleware(Config);
+    app.use(async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            await authMiddleware(req, res, next);
+        } catch (error) {
+            next(error);
+        }
+    });
 
     app.get('/services/health', async (req: Request, res: Response) => {
         const services = await getServices();
