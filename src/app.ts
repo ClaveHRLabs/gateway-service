@@ -1,6 +1,6 @@
 import { initializeDependencies } from './dependencies';
 import { proxyMiddleware } from './middleware/proxy';
-import { logger } from '@vspl/core';
+import { logger, createErrorHandler } from '@vspl/core';
 
 async function startServer() {
     try {
@@ -12,6 +12,14 @@ async function startServer() {
 
         // Start server using validated config
         const port = Config.PORT;
+
+        // Add the error handler at the end of the middleware chain
+        app.use(
+            createErrorHandler({
+                includeStackTrace: Config.SHOW_ERROR_STACK,
+            }),
+        );
+
         app.listen(port, () => {
             logger.debug(`${Config.SERVICE_NAME} running @ ${Config.HOST}:${port}`);
         });
