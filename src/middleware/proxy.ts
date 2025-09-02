@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction, HttpStatusCode, CatchErrors } from '@vspl/core';
-import axios from 'axios';
+import { Request, Response, NextFunction, HttpStatusCode, CatchErrors, Measure } from '@vspl/core';
+import axios, { AxiosRequestConfig } from 'axios';
 import proxy from 'express-http-proxy';
 import { OutgoingHttpHeaders } from 'http';
 import { AuthenticatedRequest } from '../types/request';
@@ -12,6 +12,7 @@ import {
     MEDIA_MULTIPART,
 } from '../utils/constants';
 import { logger } from '@vspl/core';
+import { TruckElectric } from 'lucide-react';
 
 // Type augmentation for headers to prevent TypeScript errors
 interface ExtendedHeaders extends OutgoingHttpHeaders {
@@ -192,39 +193,41 @@ class GatewayProxy {
     }
 
     @CatchErrors({ rethrow: false })
+    @Measure({ log: true, metricName: 'forwardRequest', logLevel: 'info'})
     public async forwardRequest(
         method: string,
         url: string,
         req: Request,
         headers: Record<string, string>,
     ) {
-        try {
-            switch (method) {
-                case 'GET':
-                    return axios.get(url, { headers, params: req.query });
-                case 'POST': {
-                    if (req.headers['content-type']?.includes(MEDIA_MULTIPART)) {
-                        return axios.post(url, req, {
-                            headers,
-                            maxBodyLength: Infinity,
-                            maxContentLength: Infinity,
-                            transformRequest: [(d) => d],
-                        });
-                    }
-                    return axios.post(url, req.body, { headers });
+        const axiosConfig: AxiosRequestConfig = {
+            validateStatus: () => true, // Don't throw errors for any status code
+            timeout: 2000,
+        };
+
+        switch (method) {
+            case 'GET':
+                return axios.get(url, { headers, params: req.query, ...axiosConfig });
+            case 'POST': {
+                if (req.headers['content-type']?.includes(MEDIA_MULTIPART)) {
+                    return axios.post(url, req, {
+                        headers,
+                        maxBodyLength: Infinity,
+                        maxContentLength: Infinity,
+                        transformRequest: [(d) => d],
+                        ...axiosConfig,
+                    });
                 }
-                case 'PUT':
-                    return axios.put(url, req.body, { headers });
-                case 'PATCH':
-                    return axios.patch(url, req.body, { headers });
-                case 'DELETE':
-                    return axios.delete(url, { headers, data: req.body });
-                default:
-                    return null;
+                return axios.post(url, req.body, { headers, ...axiosConfig });
             }
-        } catch (error) {
-            logger.error(`Error forwarding request to ${url}`, { error });
-            return null;
+            case 'PUT':
+                return axios.put(url, req.body, { headers, ...axiosConfig });
+            case 'PATCH':
+                return axios.patch(url, req.body, { headers, ...axiosConfig });
+            case 'DELETE':
+                return axios.delete(url, { headers, data: req.body, ...axiosConfig });
+            default:
+                return null;
         }
     }
 
@@ -246,6 +249,8 @@ class GatewayProxy {
         handler(req as any, res as any, next);
     }
 
+    @CatchErrors({ rethrow: false })
+    @Measure({ log: true, metricName: 'handle', logLevel: 'info' })
     async handle(req: Request, res: Response, next: NextFunction) {
         const authenticatedReq = req as AuthenticatedRequest;
         const { servicePrefix, serviceName } = this.extractServiceName(req);

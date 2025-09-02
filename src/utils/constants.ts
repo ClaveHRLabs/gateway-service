@@ -1,4 +1,3 @@
-import { HttpStatusCode } from '@vspl/core';
 
 // Centralized constants for gateway-service
 export const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
