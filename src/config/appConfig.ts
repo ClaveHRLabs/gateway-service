@@ -4,8 +4,15 @@ import { z } from 'zod';
 export const GatewayConfigSchema = AppConfigSchema.extend({
     PORT: z.coerce.number().default(5001),
     API_PREFIX: z.string().default('/'),
-    SHOW_ERROR_STACK: z.string().optional().transform(v => (v ? v.toLowerCase() === 'true' : false)),
-    SHOW_ERROR_DETAILS: z.string().optional().transform(v => (v ? v.toLowerCase() === 'true' : false)), JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
+    SHOW_ERROR_STACK: z
+        .string()
+        .optional()
+        .transform((v) => (v ? v.toLowerCase() === 'true' : false)),
+    SHOW_ERROR_DETAILS: z
+        .string()
+        .optional()
+        .transform((v) => (v ? v.toLowerCase() === 'true' : false)),
+    JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
     IDENTITY_SERVICE_URL: z.string().url().default('http://localhost:5002'),
     EMPLOYEE_SERVICE_URL: z.string().url().default('http://localhost:5003'),
     RECRUITMENT_SERVICE_URL: z.string().url().default('http://localhost:5004'),
@@ -62,7 +69,7 @@ async function createConfig(): Promise<GatewayConfig> {
 
     return {
         ...result.data,
-        SERVICE_NAME: result.data.SERVICE_NAME || 'gateway-service'
+        SERVICE_NAME: result.data.SERVICE_NAME || 'gateway-service',
     } as GatewayConfig;
 }
 

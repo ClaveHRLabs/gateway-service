@@ -1,4 +1,12 @@
-import { createApp, logger, setupGracefulShutdown, Request, Response, NextFunction, HttpStatusCode } from '@vspl/core';
+import {
+    createApp,
+    logger,
+    setupGracefulShutdown,
+    Request,
+    Response,
+    NextFunction,
+    HttpStatusCode,
+} from '@vspl/core';
 import { getConfig } from './config/appConfig';
 import { getServices } from './config/services';
 import { STATUS_CONFIGURED } from './utils/constants';
@@ -28,14 +36,14 @@ export async function initializeDependencies() {
             success: true,
             timestamp: new Date().toISOString(),
             service: Config.SERVICE_NAME,
-            services: services.map(s => ({ name: s.name, status: STATUS_CONFIGURED })),
+            services: services.map((s) => ({ name: s.name, status: STATUS_CONFIGURED })),
         });
     });
 
     setupGracefulShutdown([
         async () => {
             logger.info('Gateway shutting down. Cleaning up resources...');
-        }
+        },
     ]);
 
     return { app, logger, Config };

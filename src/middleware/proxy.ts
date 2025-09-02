@@ -11,8 +11,6 @@ import {
     HEADER_REQUEST_ID,
     MEDIA_MULTIPART,
 } from '../utils/constants';
-import { logger } from '@vspl/core';
-import { TruckElectric } from 'lucide-react';
 
 // Type augmentation for headers to prevent TypeScript errors
 interface ExtendedHeaders extends OutgoingHttpHeaders {
@@ -115,20 +113,21 @@ class GatewayProxy {
         serviceName?: string,
         allowed?: string[],
     ) {
-        return res.status(HttpStatusCode.METHOD_NOT_ALLOWED).json(
-            this.buildError(
-                ERROR_METHOD_NOT_ALLOWED,
-                `Method ${req.method} not allowed for ${serviceName}`,
-                requestId,
-                allowed ? `Allowed methods: ${allowed.join(', ')}` : undefined,
-            ),
-        );
+        return res
+            .status(HttpStatusCode.METHOD_NOT_ALLOWED)
+            .json(
+                this.buildError(
+                    ERROR_METHOD_NOT_ALLOWED,
+                    `Method ${req.method} not allowed for ${serviceName}`,
+                    requestId,
+                    allowed ? `Allowed methods: ${allowed.join(', ')}` : undefined,
+                ),
+            );
     }
 
     private buildBaseHeaders(req: Request, requestId?: string) {
         const headers: Record<string, string> = {};
-        headers['Content-Type'] =
-            (req.headers['content-type'] as string) || DEFAULT_CONTENT_TYPE;
+        headers['Content-Type'] = (req.headers['content-type'] as string) || DEFAULT_CONTENT_TYPE;
         if (requestId) headers[HEADER_REQUEST_ID] = requestId;
         return headers;
     }
@@ -139,8 +138,7 @@ class GatewayProxy {
         isIdentityService: boolean,
     ) {
         if (!isIdentityService) return;
-        if (req.headers.authorization)
-            headers['Authorization'] = req.headers.authorization;
+        if (req.headers.authorization) headers['Authorization'] = req.headers.authorization;
         if (req.headers['x-setup-code'])
             headers['x-setup-code'] = req.headers['x-setup-code'] as string;
     }
@@ -180,12 +178,9 @@ class GatewayProxy {
             'x-user-locale': user.locale,
             'x-user-timezone': user.timezone,
             'x-user-last-login': user.lastLogin,
-            'x-user-is-active':
-                user.isActive !== undefined ? String(user.isActive) : undefined,
+            'x-user-is-active': user.isActive !== undefined ? String(user.isActive) : undefined,
         };
-        Object.entries(simpleMap).forEach(
-            ([k, v]) => v !== undefined && (headers[k] = v),
-        );
+        Object.entries(simpleMap).forEach(([k, v]) => v !== undefined && (headers[k] = v));
 
         if (user.metadata) {
             headers['x-user-metadata'] = JSON.stringify(user.metadata);
@@ -193,7 +188,7 @@ class GatewayProxy {
     }
 
     @CatchErrors({ rethrow: false })
-    @Measure({ log: true, metricName: 'forwardRequest', logLevel: 'info'})
+    @Measure({ log: true, metricName: 'forwardRequest', logLevel: 'info' })
     public async forwardRequest(
         method: string,
         url: string,
@@ -241,8 +236,7 @@ class GatewayProxy {
         req.headers['x-user-id'] = req.user.id;
         req.headers['x-user-email'] = req.user.email;
         req.headers['x-user-roles'] = req.user.roles.join(',');
-        if (req.user.organizationId)
-            req.headers['x-organization-id'] = req.user.organizationId;
+        if (req.user.organizationId) req.headers['x-organization-id'] = req.user.organizationId;
         if (req.user.employeeId) req.headers['x-employee-id'] = req.user.employeeId;
 
         const handler = createMultipartProxy(serviceUrl);
@@ -281,12 +275,7 @@ class GatewayProxy {
 
         // Multipart early path
         if (req.headers['content-type']?.includes(MEDIA_MULTIPART)) {
-            this.handleMultipartDirect(
-                authenticatedReq,
-                res,
-                next,
-                serviceConfig.url,
-            );
+            this.handleMultipartDirect(authenticatedReq, res, next, serviceConfig.url);
             return;
         }
 
@@ -299,21 +288,18 @@ class GatewayProxy {
         this.applyUserHeaders(headers, authenticatedReq, isIdentityService);
 
         const targetUrl = `${serviceConfig.url}${req.path}`;
-        const response = await this.forwardRequest(
-            req.method,
-            targetUrl,
-            req,
-            headers,
-        );
+        const response = await this.forwardRequest(req.method, targetUrl, req, headers);
 
         if (!response) {
-            return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
-                this.buildError(
-                    HttpStatusCode.INTERNAL_SERVER_ERROR,
-                    `Failed request at service ${serviceName}`,
-                    authenticatedReq.requestId,
-                ),
-            );
+            return res
+                .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
+                .json(
+                    this.buildError(
+                        HttpStatusCode.INTERNAL_SERVER_ERROR,
+                        `Failed request at service ${serviceName}`,
+                        authenticatedReq.requestId,
+                    ),
+                );
         }
 
         return res.status(response.status).json({

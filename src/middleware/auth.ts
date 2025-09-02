@@ -16,7 +16,7 @@ export const createAuthMiddleware = (config: GatewayConfig) => {
         try {
             // Extract service identifier from the URL path
             const servicePrefix = req.originalUrl.split('/')[1];
-    
+
             // Check if the path should bypass authentication for this service
             if (servicePrefix) {
                 const path = req.path.replace(`/${servicePrefix}`, ''); // remove the servicePrefix
@@ -24,7 +24,9 @@ export const createAuthMiddleware = (config: GatewayConfig) => {
                 logger.info(`Checking whitelist for ${path} in service: ${servicePrefix}`);
                 const whitelisted = await isWhitelisted(path, servicePrefix);
                 if (whitelisted) {
-                    logger.info(`Bypassing authentication for whitelisted endpoint: ${servicePrefix}${path}`);
+                    logger.info(
+                        `Bypassing authentication for whitelisted endpoint: ${servicePrefix}${path}`,
+                    );
                     return next();
                 }
             }

@@ -119,7 +119,10 @@ export async function isWhitelisted(path: string, servicePrefix: string): Promis
  * @param pattern The string path or RegExp pattern to add
  * @param servicePrefix The service prefix (e.g., 'id', 'emp')
  */
-export async function addToWhitelist(pattern: string | RegExp, servicePrefix: string): Promise<void> {
+export async function addToWhitelist(
+    pattern: string | RegExp,
+    servicePrefix: string,
+): Promise<void> {
     const patterns = await getPublicPatterns();
 
     // Initialize the service's patterns array if it doesn't exist
@@ -148,7 +151,10 @@ export async function addToWhitelist(pattern: string | RegExp, servicePrefix: st
  * @param pattern The string path or RegExp pattern to remove
  * @param servicePrefix The service prefix (e.g., 'id', 'emp')
  */
-export async function removeFromWhitelist(pattern: string | RegExp, servicePrefix: string): Promise<void> {
+export async function removeFromWhitelist(
+    pattern: string | RegExp,
+    servicePrefix: string,
+): Promise<void> {
     const patterns = await getPublicPatterns();
 
     // If no whitelist exists for this service, nothing to do
@@ -176,5 +182,5 @@ export const publicPatterns: Record<string, Array<string | RegExp>> = new Proxy(
             throw new Error('Patterns not initialized. Use getPublicPatterns() instead.');
         }
         return publicPatternsCache[prop as string];
-    }
+    },
 });
